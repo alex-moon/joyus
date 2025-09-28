@@ -1,0 +1,55 @@
+$bg: #0b1021;
+$panel: #0f1631;
+$border: #2c3557;
+$text: #e1e7ef;
+$muted: #a7b3c6;
+$primary: #3b82f6;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  margin: 2rem;
+  background: $bg;
+  color: $text;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+form textarea {
+  width: 100%;
+  min-height: 10rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid $border;
+  background: $panel;
+  color: $text;
+}
+
+form button {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  background: $primary;
+  color: white;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.card {
+  background: $panel;
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.muted {
+  color: $muted;
+}
