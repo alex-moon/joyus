@@ -5,6 +5,7 @@ use {
         routing::{get, get_service},
         Router,
     },
+    askama::Template,
     core::{convert::Infallible, error::Error, time::Duration},
     datastar::{axum::ReadSignals, prelude::PatchElements},
     serde::Deserialize,
@@ -13,6 +14,18 @@ use {
 };
 
 mod component;
+
+#[derive(Template)]
+#[template(path = "../public/index.html")]
+struct Index {
+    app_content: String,
+}
+
+async fn index() -> Html<String> {
+    // Use the app handler to render the app component so any future handler logic is executed
+    let Html(app_content) = component_app().await;
+    Html(Index { app_content }.render().unwrap())
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -28,8 +41,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let static_service = get_service(ServeDir::new("public").append_index_html_on_directories(true));
 
     let app = Router::new()
+        .route("/", get(index))
+        .route("/app", get(component_app))
         .route("/events", get(events))
-        .route("/c/app", get(component_app))
         .fallback_service(static_service);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:12345")

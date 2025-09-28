@@ -14,7 +14,7 @@ services:
       - DATABASE_URL=postgres://joyus:joyus@db:5432/joyus
       - RUST_LOG=joyus=debug,tower_http=debug
     volumes:
-      - ./:/app
+      - ./:/app:z
       - cargo-cache:/usr/local/cargo/registry
       - target-cache:/app/target
     depends_on:

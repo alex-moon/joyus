@@ -25,7 +25,8 @@ RUN npm ci || npm i --force
 
 # 2) Development stage: installs cargo-watch and runs concurrent dev servers
 FROM base AS dev
-# Install cargo-watch for dev hot-reload
+# Install concurrently and cargo-watch for dev hot-reload
+RUN npm install -g concurrently
 RUN cargo install cargo-watch
 # Copy the rest of the sources
 COPY . .
