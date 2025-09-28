@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    image: joyus:dev
+    container_name: joyus_dev
+    ports:
+      - "12345:12345"
+    environment:
+      # Example DB URL env that your app could read if/when it needs DB access
+      - DATABASE_URL=postgres://joyus:joyus@db:5432/joyus
+      - RUST_LOG=joyus=debug,tower_http=debug
+    volumes:
+      - ./:/app:z
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    depends_on:
+      - db
+    # Ensure tty for watch tools
+    tty: true
+
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: joyus_postgis_dev
+    environment:
+      - POSTGRES_DB=joyus
+      - POSTGRES_USER=joyus
+      - POSTGRES_PASSWORD=joyus
+    ports:
+      - "15432:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+
+volumes:
+  pgdata_dev:
+  cargo-cache:
+  target-cache:

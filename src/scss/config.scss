@@ -1,0 +1,112 @@
+@use 'fonts' as *;
+
+// Backgrounds & Surfaces
+$bg: #1a1816;           // Warm dark (hint of brown)
+$panel: #242220;        // Slightly lighter warm surface
+$border: #3a3632;       // Warm border (more visible)
+$text: #f0ede8;         // Warm white
+$muted: #b8afa0;        // Warm muted text
+
+// Primary - Vibrant Orange (joy, energy, sunset)
+$primary: #f97316;
+$primary-muted: #ea580c;
+$primary-dark: #c2410c;
+$primary-light: #fb923c;
+
+// Secondary - Cyan (calm, clarity, water)
+$secondary: #06b6d4;
+$secondary-muted: #0891b2;
+$secondary-dark: #0e7490;
+$secondary-light: #22d3ee;
+
+// Accent - Soft Purple (reflection, thoughtfulness)
+$accent: #a78bfa;
+$accent-muted: #8b5cf6;
+$accent-dark: #7c3aed;
+$accent-light: #c4b5fd;
+
+// Links - Using the accent purple
+$link: #a78bfa;
+$link-hover: #c4b5fd;
+$link-active: #8b5cf6;
+$link-visited: #7c3aed;
+$link-focus-ring: rgba(167, 139, 250, 0.4);
+
+// Semantic colors
+$success: #10b981;
+$success-muted: #059669;
+$warning: #f59e0b;
+$warning-muted: #d97706;
+$error: #ef4444;
+$error-muted: #dc2626;
+$info: $secondary;
+$info-muted: $secondary-muted;
+
+@mixin respond-to($media) {
+  @if $media == desktop {
+    @media (min-width: 901px) { @content; }
+  }
+  @else if $media == mobile {
+    @media (max-width: 900px) { @content; }
+  }
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Figtree", sans-serif;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 1rem 0;
+  color: $primary;
+}
+
+input,
+textarea {
+  width: 100%;
+  background: $bg;
+  color: $text;
+  border: 2px solid $border;
+  border-radius: 8px;
+  padding: 1rem;
+  font: inherit;
+  transition: border-color 0.2s;
+
+  &::placeholder {
+    color: $muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+  }
+}
+
+textarea {
+  min-height: 200px;
+  resize: none;
+}
+
+button {
+  padding: 0.75rem 1.5rem;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 2px solid $border;
+  background: #2a2f32;
+  color: $text;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #323a3e;
+  }
+
+  &.primary {
+    background: $primary;
+    border-color: $primary;
+    color: white;
+
+    &:hover {
+      background: $primary-muted;
+    }
+  }
+}

@@ -6,4 +6,6 @@ debug
 target
 data/*
 .idea
+node_modules
+public
 

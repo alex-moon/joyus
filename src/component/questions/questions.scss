@@ -1,0 +1,119 @@
+@use "/src/scss/config" as *;
+
+:host {
+  display: block;
+  background: $panel;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 2px solid $border;
+
+  section.start-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
+    background: $bg;
+  }
+
+  article.welcome-card {
+    width: 100%;
+    max-width: 32rem;
+    background: $panel;
+    border: 2px solid $border;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+
+    h1 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: $text;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      color: $muted;
+      margin-bottom: 2rem;
+    }
+  }
+
+  section.question-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
+    background: $bg;
+  }
+
+  div.progress-container {
+    width: 100%;
+    max-width: 48rem;
+    margin-bottom: 2rem;
+  }
+
+  div.progress-bar {
+    height: 4px;
+    background: $primary;
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+  }
+
+  article.question-card {
+    width: 100%;
+    max-width: 48rem;
+    background: $panel;
+    border: 2px solid $border;
+    border-radius: 12px;
+    padding: 2rem;
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: $text;
+      margin-bottom: 1.5rem;
+    }
+
+    textarea {
+      width: 100%;
+      background: $bg;
+      color: $text;
+      border: 2px solid $border;
+      border-radius: 8px;
+      padding: 1rem;
+      min-height: 200px;
+      resize: none;
+      font: inherit;
+      transition: border-color 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+      }
+
+      &::placeholder {
+        color: $muted;
+      }
+    }
+  }
+
+  p.character-count {
+    color: $muted;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+
+    span.complete {
+      margin-left: 0.5rem;
+      color: $success;
+    }
+  }
+
+  footer.question-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+}

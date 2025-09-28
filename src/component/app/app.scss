@@ -1,0 +1,11 @@
+@use "/src/scss/config" as *;
+
+:host {
+  display: block;
+  width: 800px;
+  margin: 16px auto;
+
+  @include respond-to(mobile) {
+    width: 100%;
+  }
+}
