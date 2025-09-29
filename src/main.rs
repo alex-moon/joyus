@@ -1,19 +1,25 @@
 use {
-    asynk_strim::{stream_fn, Yielder},
     axum::{
-        response::{sse::Event, Html, IntoResponse, Sse},
+        extract::State,
+        response::Html,
         routing::{get, get_service},
         Router,
     },
     askama::Template,
-    core::{convert::Infallible, error::Error, time::Duration},
-    datastar::{axum::ReadSignals, prelude::PatchElements},
-    serde::Deserialize,
+    core::error::Error,
+    std::sync::Arc,
     tower_http::services::ServeDir,
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };
 
 mod component;
+mod service;
+
+use service::{
+    event::EventBus,
+    sse::{events as sse_events, SseService},
+};
+
 
 #[derive(Template)]
 #[template(path = "../public/index.html")]
@@ -23,7 +29,7 @@ struct Index {
 
 async fn index() -> Html<String> {
     // Use the app handler to render the app component so any future handler logic is executed
-    let Html(app_content) = component_app().await;
+    let Html(app_content) = component::app::component_app().await;
     Html(Index { app_content }.render().unwrap())
 }
 
@@ -40,10 +46,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let static_service = get_service(ServeDir::new("public").append_index_html_on_directories(true));
 
-    let app = Router::new()
+    // Initialize services
+    let _event_bus = Arc::new(EventBus::new(100));
+    let sse = Arc::new(SseService::new(100));
+
+    // Build routers
+    let base = Router::new()
         .route("/", get(index))
-        .route("/app", get(component_app))
-        .route("/events", get(events))
+        .route("/app", get(component::app::component_app));
+
+    let events_router = Router::new()
+        .route("/events", get(sse_events))
+        .with_state(sse);
+
+    let app = base
+        .merge(events_router)
         .fallback_service(static_service);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:12345")
@@ -55,31 +72,4 @@ async fn main() -> Result<(), Box<dyn Error>> {
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
-}
-
-async fn component_app() -> Html<String> {
-    Html(component::app::render())
-}
-
-const MESSAGE: &str = "Hello, world!";
-
-#[derive(Deserialize)]
-pub struct Signals {
-    pub delay: u64,
-}
-
-async fn events(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoResponse {
-    Sse::new(stream_fn(
-        move |mut yielder: Yielder<Result<Event, Infallible>>| async move {
-            for i in 0..MESSAGE.len() {
-                let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
-                let patch = PatchElements::new(elements);
-                let sse_event = patch.write_as_axum_sse_event();
-
-                yielder.yield_item(Ok(sse_event)).await;
-
-                tokio::time::sleep(Duration::from_millis(signals.delay)).await;
-            }
-        },
-    ))
 }
