@@ -1,55 +1,109 @@
-$bg: #181a1b;
-$panel: #202324;
-$border: #2f3437;
-$text: #e8e6e3;
-$muted: #b8b2a6;
-$primary: #f59e0b;
-
-* {
-  box-sizing: border-box;
-}
+@use "scss/config" as *;
 
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  margin: 2rem;
+  font-family: "Lexend", sans-serif;
+  color: $text;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: $bg;
-  color: $text;
-}
 
-.container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  align-items: start;
-}
+  // Headings
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Figtree", sans-serif;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1rem 0;
+    color: $primary;
+  }
 
-form textarea {
-  width: 100%;
-  min-height: 10rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid $border;
-  background: $panel;
-  color: $text;
-}
+  // Links
+  a {
+    color: $link;
+    transition: color 0.2s ease-in-out;
+    text-decoration: underline;
+    text-underline-offset: 2px;
 
-form button {
-  margin-top: 0.75rem;
-  padding: 0.5rem 0.9rem;
-  background: $primary;
-  color: white;
-  border: 0;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
+    &:active {
+      color: $link-active;
+    }
 
-.card {
-  background: $panel;
-  border: 1px solid $border;
-  border-radius: 0.75rem;
-  padding: 1rem;
-}
+    &:visited {
+      color: $link-visited;
+    }
 
-.muted {
-  color: $muted;
+    &:hover {
+      color: $link-hover;
+    }
+
+    &:focus-visible {
+      outline: 2px dashed $link-focus-ring;
+      outline-offset: 2px;
+    }
+  }
+
+  $padding: 16px;
+  $mobile-padding: 8px;
+  $header-height: 48px;
+  $footer-height: 32px;
+
+  header {
+    background: $panel;
+    height: $header-height;
+    padding: $padding;
+    display: flex;
+    align-items: flex-start;
+    gap: $padding;
+    color: $muted;
+
+    .logo {
+      img {
+        width: $header-height;
+        height: $header-height;
+      }
+    }
+
+    .text {
+      height: $header-height;
+      overflow: hidden;
+
+      h1 {
+        margin: 0;
+        line-height: 0.8em;
+      }
+
+      p {
+        margin: 0;
+      }
+    }
+
+    @include respond-to(mobile) {
+      padding: $mobile-padding;
+    }
+  }
+
+  main {
+    flex-grow: 1;
+  }
+
+  footer {
+    background: $panel;
+    color: $muted;
+    height: $footer-height;
+    padding: $padding;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    @include respond-to(mobile) {
+      padding: $mobile-padding;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
 }

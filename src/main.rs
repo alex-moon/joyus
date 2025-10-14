@@ -8,7 +8,7 @@ use {
     askama::Template,
     core::error::Error,
     std::sync::Arc,
-    tower_http::services::ServeDir,
+    tower_http::services::{ServeDir, ServeFile},
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };
 
@@ -53,7 +53,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Build routers
     let base = Router::new()
         .route("/", get(index))
-        .route("/app", get(component::app::component_app));
+        .route("/app", get(component::app::component_app))
+        .route("/favicon.ico", get_service(ServeFile::new("public/assets/favicon.ico")));
 
     let events_router = Router::new()
         .route("/events", get(sse_events))

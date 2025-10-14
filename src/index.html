@@ -6,6 +6,23 @@
   <title>Joyus</title>
 </head>
 <body>
-  {{ app_content|safe }}
+  <header>
+    <div class="logo">
+      <img src="/assets/logo.png" alt="Joyus Icon" />
+    </div>
+    <div class="text">
+      <h1>Joyus</h1>
+      <p class="subtitle">anti-social media</p>
+    </div>
+  </header>
+  <main>
+    {{ app_content|safe }}
+  </main>
+  <footer>
+    <p>
+      an <a target="_blank" href="https://ajmoon.com">Alex Moon</a> production
+      • <a target="_blank" href="https://github.com/alex-moon/joyus">fork me on GitHub</a>
+    </p>
+  </footer>
 </body>
 </html>
