@@ -3,9 +3,18 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
+function components() {
+  const components = {};
+  for (const component of ['app', 'questions']) {
+    components[`css/component/${component}`] = path.resolve(__dirname, 'src', 'component', component, `${component}.scss`);
+  }
+  return components;
+}
+
 module.exports = {
   entry: {
     bundle: path.resolve(__dirname, 'src', 'index.ts'),
+    ...components(),
   },
   output: {
     path: path.resolve(__dirname, 'public', 'assets'),
@@ -30,7 +39,7 @@ module.exports = {
     ],
   },
   plugins: [
-    new MiniCssExtractPlugin({ filename: 'styles.[contenthash].css' }),
+    new MiniCssExtractPlugin({ filename: '[name].css' }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src', 'index.html'),
       filename: '../index.html',

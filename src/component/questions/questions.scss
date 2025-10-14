@@ -1,0 +1,6 @@
+@use "/src/scss/config" as *;
+
+:host {
+  display: block;
+  background: $panel;
+}
