@@ -50,3 +50,63 @@ $info-muted: $secondary-muted;
     @media (max-width: 900px) { @content; }
   }
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Figtree", sans-serif;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 1rem 0;
+  color: $primary;
+}
+
+input,
+textarea {
+  width: 100%;
+  background: $bg;
+  color: $text;
+  border: 2px solid $border;
+  border-radius: 8px;
+  padding: 1rem;
+  font: inherit;
+  transition: border-color 0.2s;
+
+  &::placeholder {
+    color: $muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+  }
+}
+
+textarea {
+  min-height: 200px;
+  resize: none;
+}
+
+button {
+  padding: 0.75rem 1.5rem;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 2px solid $border;
+  background: #2a2f32;
+  color: $text;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #323a3e;
+  }
+
+  &.primary {
+    background: $primary;
+    border-color: $primary;
+    color: white;
+
+    &:hover {
+      background: $primary-muted;
+    }
+  }
+}

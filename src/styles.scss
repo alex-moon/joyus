@@ -10,15 +10,6 @@ body {
   flex-direction: column;
   background: $bg;
 
-  // Headings
-  h1, h2, h3, h4, h5, h6 {
-    font-family: "Figtree", sans-serif;
-    font-weight: 600;
-    line-height: 1.2;
-    margin: 0 0 1rem 0;
-    color: $primary;
-  }
-
   // Links
   a {
     color: $link;
