@@ -24,13 +24,12 @@ use service::{
 #[derive(Template)]
 #[template(path = "../public/index.html")]
 struct Index {
-    app_content: String,
+    app: String,
 }
 
 async fn index() -> Html<String> {
-    // Use the app handler to render the app component so any future handler logic is executed
-    let Html(app_content) = component::app::component_app().await;
-    Html(Index { app_content }.render().unwrap())
+    let Html(app) = component::app::component().await;
+    Html(Index { app }.render().unwrap())
 }
 
 #[tokio::main]
@@ -53,7 +52,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Build routers
     let base = Router::new()
         .route("/", get(index))
-        .route("/app", get(component::app::component_app))
+        .route("/app", get(component::app::component))
         .route("/favicon.ico", get_service(ServeFile::new("public/assets/favicon.ico")));
 
     let events_router = Router::new()

@@ -1,15 +1,19 @@
 use askama::Template;
 use axum::response::Html;
+use crate::component;
 
 #[derive(Template)]
 #[template(path = "component/app/app.html")]
-pub struct App {}
+pub struct App {
+    questions: String,
+}
 
-pub fn render() -> String {
-    let app = App {};
+pub async fn render() -> String {
+    let Html(questions) = component::questions::component().await;
+    let app = App {questions};
     app.render().unwrap()
 }
 
-pub async fn component_app() -> Html<String> {
-    Html(render())
+pub async fn component() -> Html<String> {
+    Html(render().await)
 }

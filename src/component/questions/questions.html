@@ -1,121 +1,121 @@
 <app-questions>
   <template shadowrootmode="open">
-  <link rel="stylesheet" href="/assets/css/component/questions.css"/>
-  <div class="questions">
-    <div data-store='{"currentStep": -1, "answers": ["", "", "", ""], "isSubmitting": false}'>
-    <!-- Start Screen -->
-    <div data-show="$currentStep === -1">
-      <div>
-      <h1>Ready to reflect?</h1>
-      <p>
-        Let's turn today's frustrations into tomorrow's connections
-      </p>
-      <button data-on-click="$currentStep = 0">
-        Answer some questions
-      </button>
-      </div>
-    </div>
-
-    <!-- Question Steps -->
-    <div data-show="$currentStep>= 0">
-      <div>
-      <!-- Progress Bar -->
-      <div>
-        <div>
-            <div data-bind-style="width: (($currentStep + 1) / 4 * 100) + '%'"></div>
+      <link rel="stylesheet" href="/assets/css/component/questions.css"/>
+      <div class="questions">
+        <div data-store='{"currentStep": -1, "answers": ["", "", "", ""], "isSubmitting": false}'>
+        <!-- Start Screen -->
+        <div data-show="$currentStep === -1">
+          <div>
+          <h1>Ready to reflect?</h1>
+          <p>
+            Let's turn today's frustrations into tomorrow's connections
+          </p>
+          <button data-on-click="$currentStep = 0">
+            Answer some questions
+          </button>
+          </div>
         </div>
-        <p>
-        Step <span data-text="$currentStep + 1"></span> of 4
-        </p>
-      </div>
 
-      <!-- Question 1 -->
-      <div data-show="$currentStep === 0">
-        <h2>
-        Write about something that upset or annoyed you today
-        </h2>
-        <textarea
-          data-model="$answers[0]"
-          data-on-input="if ($answers[0].length>= 50) setTimeout(() => $currentStep = 1, 300)"
-          placeholder="What frustrated you?"
-          autofocus
-       ></textarea>
-        <p>
-        <span data-text="$answers[0].length"></span> / 50 characters
-        <span data-show="$answers[0].length>= 50">✓ Moving on...</span>
-        </p>
-      </div>
+        <!-- Question Steps -->
+        <div data-show="$currentStep>= 0">
+          <div>
+          <!-- Progress Bar -->
+          <div>
+            <div>
+                <div data-bind-style="width: (($currentStep + 1) / 4 * 100) + '%'"></div>
+            </div>
+            <p>
+            Step <span data-text="$currentStep + 1"></span> of 4
+            </p>
+          </div>
 
-      <!-- Question 2 -->
-      <div data-show="$currentStep === 1">
-        <h2>
-        What was the context? What were you doing?
-        </h2>
-        <textarea
-          data-model="$answers[1]"
-          data-on-input="if ($answers[1].length>= 50) setTimeout(() => $currentStep = 2, 300)"
-          placeholder="Describe the situation..."
-          
-          autofocus
-       ></textarea>
-        <p>
-        <span data-text="$answers[1].length"></span> / 50 characters
-        </p>
-      </div>
+          <!-- Question 1 -->
+          <div data-show="$currentStep === 0">
+            <h2>
+            Write about something that upset or annoyed you today
+            </h2>
+            <textarea
+              data-model="$answers[0]"
+              data-on-input="if ($answers[0].length>= 50) setTimeout(() => $currentStep = 1, 300)"
+              placeholder="What frustrated you?"
+              autofocus
+           ></textarea>
+            <p>
+            <span data-text="$answers[0].length"></span> / 50 characters
+            <span data-show="$answers[0].length>= 50">✓ Moving on...</span>
+            </p>
+          </div>
 
-      <!-- Question 3 -->
-      <div data-show="$currentStep === 2">
-        <h2>
-        What joy do you find in that context or activity?
-        </h2>
-        <textarea
-          data-model="$answers[2]"
-          data-on-input="if ($answers[2].length>= 50) setTimeout(() => $currentStep = 3, 300)"
-          placeholder="Think about the positive side..."
-          
-          autofocus
-       ></textarea>
-        <p>
-        <span data-text="$answers[2].length"></span> / 50 characters
-        </p>
-      </div>
+          <!-- Question 2 -->
+          <div data-show="$currentStep === 1">
+            <h2>
+            What was the context? What were you doing?
+            </h2>
+            <textarea
+              data-model="$answers[1]"
+              data-on-input="if ($answers[1].length>= 50) setTimeout(() => $currentStep = 2, 300)"
+              placeholder="Describe the situation..."
 
-      <!-- Question 4 (Final) -->
-      <div data-show="$currentStep === 3">
-        <h2>
-        What question could a stranger ask to get you talking about that joy?
-        </h2>
-        <textarea
-          data-model="$answers[3]"
-          placeholder="What would you want to be asked?"
-          
-          autofocus
-       ></textarea>
-        <div>
-    <span>
-    <span data-text="$answers[3].length"></span> / 30 characters
-    </span>
-        <button
-          data-show="$answers[3].length>= 30"
-          data-on-click="$$post('/api/questions/submit', {answers: $answers})"
-          
-       >
-          Submit & Find Questions
-        </button>
+              autofocus
+           ></textarea>
+            <p>
+            <span data-text="$answers[1].length"></span> / 50 characters
+            </p>
+          </div>
+
+          <!-- Question 3 -->
+          <div data-show="$currentStep === 2">
+            <h2>
+            What joy do you find in that context or activity?
+            </h2>
+            <textarea
+              data-model="$answers[2]"
+              data-on-input="if ($answers[2].length>= 50) setTimeout(() => $currentStep = 3, 300)"
+              placeholder="Think about the positive side..."
+
+              autofocus
+           ></textarea>
+            <p>
+            <span data-text="$answers[2].length"></span> / 50 characters
+            </p>
+          </div>
+
+          <!-- Question 4 (Final) -->
+          <div data-show="$currentStep === 3">
+            <h2>
+            What question could a stranger ask to get you talking about that joy?
+            </h2>
+            <textarea
+              data-model="$answers[3]"
+              placeholder="What would you want to be asked?"
+
+              autofocus
+           ></textarea>
+            <div>
+        <span>
+        <span data-text="$answers[3].length"></span> / 30 characters
+        </span>
+            <button
+              data-show="$answers[3].length>= 30"
+              data-on-click="$$post('/api/questions/submit', {answers: $answers})"
+
+           >
+              Submit & Find Questions
+            </button>
+            </div>
+          </div>
+
+          <!-- Back Button -->
+          <button
+            data-show="$currentStep> 0"
+            data-on-click="$currentStep = $currentStep - 1"
+
+         >
+            ← Back to previous question
+          </button>
+          </div>
+        </div>
         </div>
       </div>
-
-      <!-- Back Button -->
-      <button
-        data-show="$currentStep> 0"
-        data-on-click="$currentStep = $currentStep - 1"
-        
-     >
-        ← Back to previous question
-      </button>
-      </div>
-    </div>
-    </div>
-  </div>
   </template>
 </app-questions>
