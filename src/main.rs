@@ -1,6 +1,5 @@
 use {
     axum::{
-        extract::State,
         response::Html,
         routing::{get, get_service},
         Router,

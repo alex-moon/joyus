@@ -18,6 +18,7 @@ impl SseService {
         Self { html_tx }
     }
 
+    #[allow(dead_code)]
     pub fn publish_html(&self, html: String) -> Result<usize, broadcast::error::SendError<String>> {
         self.html_tx.send(html)
     }

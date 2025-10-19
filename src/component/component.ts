@@ -1,14 +1,39 @@
-import * as Datastar from '../datastar/src/index';
+import {apply, load} from '../datastar/src';
+import {
+    Attr,
+    Bind,
+    Class,
+    Computed,
+    DELETE, Effect,
+    GET, Indicator, JsonSignals, On, OnIntersect, OnInterval, OnLoad, OnSignalPatch,
+    PATCH,
+    PatchElements,
+    PatchSignals, Peek,
+    POST,
+    PUT, Ref, SetAll, Show, Signals, Style, Text, ToggleAll
+} from "../datastar/src/plugins";
 
 export class Component extends HTMLElement {
+    protected getData() {
+        return {};
+    }
+
     connectedCallback() {
         if (!this.shadowRoot) {
-            console.error('Expected shadowRoot to be present');
+            throw new Error('Expected shadowRoot to be present');
         }
-        try {
-            Datastar.apply(this);
-        } catch (e) {
-            console.error('Failed to apply datastar', e);
+        this.bind();
+    }
+
+    bind() {
+        const wrapper = document.createElement('div');
+        while (this.shadowRoot.firstChild) {
+            wrapper.appendChild(this.shadowRoot.firstChild);
         }
+
+        this.shadowRoot.appendChild(wrapper);
+        wrapper.dataset.signals = JSON.stringify(this.getData());
+        apply(wrapper as HTMLElement);
+        (window as any).ctrl[this.id] = this;
     }
 }

@@ -1009,6 +1009,7 @@ function applyAttributePlugin(
         }
         cleanups.set(rawKey, cleanup)
       }
+    } else {
     }
   }
 }
