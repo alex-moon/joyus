@@ -1,2 +1,2 @@
-import 'app/app';
-import 'questions/questions';
+require('./app/app');
+require('./questions/questions');

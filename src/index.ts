@@ -1,1 +1,2 @@
-import './components/index';
+require('./styles.scss');
+require('./component/index');
