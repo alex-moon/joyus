@@ -1,8 +1,7 @@
 use {
     asynk_strim::{stream_fn, Yielder},
     axum::{extract::State, response::{sse::Event, IntoResponse, Sse}},
-    core::{convert::Infallible},
-    datastar::{prelude::PatchElements},
+    core::convert::Infallible,
     std::sync::Arc,
     tokio::sync::broadcast,
 };
@@ -37,8 +36,10 @@ pub async fn events(
         loop {
             match rx.recv().await {
                 Ok(html) => {
-                    let patch = PatchElements::new(html);
-                    let sse_event = patch.write_as_axum_sse_event();
+                    // Send a plain HTML component swap event via Axum SSE
+                    let sse_event = Event::default()
+                        .event("component-swap")
+                        .data(html);
                     yielder.yield_item(Ok(sse_event)).await;
                 }
                 Err(broadcast::error::RecvError::Lagged(_)) => {
