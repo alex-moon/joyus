@@ -2,14 +2,18 @@
 // Slug: Outputs a JSON stringified version of signals.
 // Description: Sets the text content of an element to a reactive JSON stringified version of signals.
 
-import type { AttributePlugin, SignalFilterOptions } from '../../engine/types'
-import { jsStrToObject } from '../../utils/text'
+import { attribute } from '@engine'
+import {effect, filtered, getStoreFor} from '@engine/signals'
+import type { SignalFilterOptions } from '@engine/types'
+import { jsStrToObject } from '@utils/text'
 
-export const JsonSignals: AttributePlugin = {
-  type: 'attribute',
-  name: 'jsonSignals',
-  keyReq: 'denied',
-  onLoad: ({ el, effect, value, filtered, mods }) => {
+attribute({
+  name: 'json-signals',
+  requirement: {
+    key: 'denied',
+  },
+  apply({ el, value, mods }) {
+    const store = getStoreFor(el)
     const spaces = mods.has('terse') ? 0 : 2
     let filters: SignalFilterOptions = {}
     if (value) {
@@ -18,7 +22,7 @@ export const JsonSignals: AttributePlugin = {
 
     const callback = () => {
       observer.disconnect()
-      el.textContent = JSON.stringify(filtered(filters), null, spaces)
+      el.textContent = JSON.stringify(filtered(filters, store), null, spaces)
       observer.observe(el, {
         childList: true,
         characterData: true,
@@ -33,4 +37,4 @@ export const JsonSignals: AttributePlugin = {
       cleanup()
     }
   },
-}
+})

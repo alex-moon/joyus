@@ -27,7 +27,7 @@ struct Index {
 }
 
 async fn index() -> Html<String> {
-    let Html(app) = component::app::component().await;
+    let Html(app) = component::app::show().await;
     Html(Index { app }.render().unwrap())
 }
 
@@ -51,14 +51,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Build routers
     let base = Router::new()
         .route("/", get(index))
-        .route("/app", get(component::app::component))
+        .merge(component::app::router())
+        .merge(component::questions::router())
         .route("/favicon.ico", get_service(ServeFile::new("public/assets/favicon.ico")));
 
     let events_router = Router::new()
         .route("/events", get(sse_events))
         .with_state(sse);
 
-    let app = base
+    let routes = base
         .merge(events_router)
         .fallback_service(static_service);
 
@@ -68,7 +69,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
 
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, routes).await.unwrap();
 
     Ok(())
 }

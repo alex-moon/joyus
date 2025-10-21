@@ -2,22 +2,23 @@
 // Slug: Patches signals into the existing signals.
 // Description: Patches (adds, updates or removes) one or more signals into the existing signals.
 
-import type { AttributePlugin } from '../../engine/types'
-import { modifyCasing } from '../../utils/text'
+import { attribute } from '@engine'
+import {getStoreFor, mergePatch, mergePaths} from '@engine/signals'
+import { modifyCasing } from '@utils/text'
 
-export const Signals: AttributePlugin = {
-  type: 'attribute',
+attribute({
   name: 'signals',
   returnsValue: true,
-  onLoad: ({ key, mods, rx, mergePatch, mergePaths }) => {
+  apply({ el, key, mods, rx }) {
+    const store = getStoreFor(el)
     const ifMissing = mods.has('ifmissing')
 
     if (key) {
       key = modifyCasing(key, mods)
-      mergePaths([[key, rx()]], { ifMissing })
+      mergePaths([[key, rx?.()]], store, {ifMissing})
     } else {
-      const patch = Object.assign({}, rx<Record<string, any>>())
-      mergePatch(patch, { ifMissing })
+      const patch = Object.assign({}, rx?.() as Record<string, any>)
+      mergePatch(patch, store, {ifMissing})
     }
   },
-}
+})

@@ -2,24 +2,28 @@
 // Slug: Runs an expression on intersection.
 // Description: Runs an expression when the element intersects with the viewport.
 
-import type { AttributePlugin, HTMLOrSVG } from '../../engine/types'
-import { modifyTiming } from '../../utils/timing'
-import { modifyViewTransition } from '../../utils/view-transitions'
+import { attribute } from '@engine'
+import { beginBatch, endBatch } from '@engine/signals'
+import type { HTMLOrSVG } from '@engine/types'
+import { modifyTiming } from '@utils/timing'
+import { modifyViewTransition } from '@utils/view-transitions'
 
 const once = new WeakSet<HTMLOrSVG>()
 
-export const OnIntersect: AttributePlugin = {
-  type: 'attribute',
-  name: 'onIntersect',
-  keyReq: 'denied',
-  onLoad: ({ el, mods, rx, startBatch, endBatch }) => {
+attribute({
+  name: 'on-intersect',
+  requirement: {
+    key: 'denied',
+    value: 'must',
+  },
+  apply({ el, mods, rx }) {
     let callback = () => {
-      startBatch()
+      beginBatch()
       rx()
       endBatch()
     }
-    callback = modifyTiming(callback, mods)
     callback = modifyViewTransition(callback, mods)
+    callback = modifyTiming(callback, mods)
     const options = { threshold: 0 }
     if (mods.has('full')) {
       options.threshold = 1
@@ -53,4 +57,4 @@ export const OnIntersect: AttributePlugin = {
       }
     }
   },
-}
+})
