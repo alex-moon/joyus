@@ -1,6 +1,7 @@
 import { DATASTAR_SIGNAL_PATCH_EVENT } from '@engine/consts'
 
-export type JSONPatch = Record<string, any> & { length?: never }
+export type Store = Record<string, any>
+export type JSONPatch = Store & { length?: never }
 export type Paths = [string, any][]
 
 export type DatastarFetchEvent = {

@@ -1,6 +1,6 @@
 import { DATASTAR_FETCH_EVENT, DSP, DSS } from '@engine/consts'
 import { snake } from '@utils/text'
-import { root } from '@engine/signals'
+import {getStoreFor} from '@engine/signals'
 import type {
   ActionPlugin,
   ActionContext,
@@ -55,20 +55,19 @@ const removals = new Map<HTMLOrSVG, Map<string, () => void>>()
 
 const queuedAttributes: AttributePlugin[] = []
 const queuedAttributeNames = new Set<string>()
-export const attribute = <R extends Requirement, B extends boolean>(
-  plugin: AttributePlugin<R, B>,
-): void => {
-  queuedAttributes.push(plugin as unknown as AttributePlugin)
 
+export const attribute = <R extends Requirement, B extends boolean>(
+    plugin: AttributePlugin<R, B>,
+): void => {
+  // Make the plugin available immediately for any manual apply() calls
+  attributePlugins.set(plugin.name, plugin as unknown as AttributePlugin)
+  queuedAttributeNames.add(plugin.name)
+
+  // Batch only the auto-apply-once behavior
+  queuedAttributes.push(plugin as unknown as AttributePlugin)
   if (queuedAttributes.length === 1) {
     setTimeout(() => {
-      for (const attribute of queuedAttributes) {
-        queuedAttributeNames.add(attribute.name)
-        attributePlugins.set(attribute.name, attribute)
-      }
       queuedAttributes.length = 0
-      apply()
-      queuedAttributeNames.clear()
     })
   }
 }
@@ -184,10 +183,11 @@ const mutationObserver = new MutationObserver(observe)
 export const apply = (
   root: HTMLOrSVG | ShadowRoot = document.documentElement,
 ): void => {
+  const onlyNew = root === document.documentElement;
   if (isHTMLOrSVG(root)) {
-    applyEls([root], true)
+    applyEls([root], onlyNew)
   }
-  applyEls(root.querySelectorAll<HTMLOrSVG>('*'), true)
+  applyEls(root.querySelectorAll<HTMLOrSVG>('*'), onlyNew)
 
   mutationObserver.observe(root, {
     subtree: true,
@@ -415,7 +415,8 @@ const genRx = (
         throw err('UndefinedAction')
       }
       try {
-        return fn(el, root, action, undefined, ...args)
+        const store = getStoreFor(el)
+        return fn(el, store, action, undefined, ...args)
       } catch (e: any) {
         console.error(e)
         throw error(

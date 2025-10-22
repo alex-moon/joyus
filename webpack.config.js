@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
@@ -18,12 +19,18 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'public', 'assets'),
-    filename: '[name].[contenthash].js',
-    chunkFilename: '[name].[contenthash].js',
+    filename: '[name].js',
+    chunkFilename: '[name].js',
     clean: true,
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    alias: {
+      '@engine': path.resolve(__dirname, 'src/datastar/engine'),
+      '@plugins': path.resolve(__dirname, 'src/datastar/plugins'),
+      '@bundles': path.resolve(__dirname, 'src/datastar/bundles'),
+      '@utils': path.resolve(__dirname, 'src/datastar/utils')
+    },
   },
   module: {
     rules: [
@@ -39,6 +46,9 @@ module.exports = {
     ],
   },
   plugins: [
+    new webpack.DefinePlugin({
+      ALIAS: JSON.stringify(null),
+    }),
     new MiniCssExtractPlugin({ filename: '[name].css' }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src', 'index.html'),

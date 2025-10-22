@@ -3,7 +3,7 @@
 // Description: Patches signals.
 
 import { watcher } from '@engine'
-import { mergePatch } from '@engine/signals'
+import {root, mergePatch} from '@engine/signals'
 import { jsStrToObject } from '@utils/text'
 
 watcher({
@@ -11,7 +11,7 @@ watcher({
   apply({ error }, { signals, onlyIfMissing }) {
     if (signals) {
       const ifMissing = onlyIfMissing?.trim() === 'true'
-      mergePatch(jsStrToObject(signals), { ifMissing })
+      mergePatch(jsStrToObject(signals), root, {ifMissing})
     } else {
       throw error('PatchSignalsExpectedSignals')
     }

@@ -3,21 +3,22 @@
 // Description: Patches (adds, updates or removes) one or more signals into the existing signals.
 
 import { attribute } from '@engine'
-import { mergePatch, mergePaths } from '@engine/signals'
+import {getStoreFor, mergePatch, mergePaths} from '@engine/signals'
 import { modifyCasing } from '@utils/text'
 
 attribute({
   name: 'signals',
   returnsValue: true,
-  apply({ key, mods, rx }) {
+  apply({ el, key, mods, rx }) {
+    const store = getStoreFor(el)
     const ifMissing = mods.has('ifmissing')
 
     if (key) {
       key = modifyCasing(key, mods)
-      mergePaths([[key, rx?.()]], { ifMissing })
+      mergePaths([[key, rx?.()]], store, {ifMissing})
     } else {
       const patch = Object.assign({}, rx?.() as Record<string, any>)
-      mergePatch(patch, { ifMissing })
+      mergePatch(patch, store, {ifMissing})
     }
   },
 })

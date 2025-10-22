@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "webpack --mode=production",
     "dev:web": "webpack --mode=development --watch",
-    "dev": "concurrently \"cargo watch -x run\" \"npm run dev:web\""
+    "dev:rust": "cargo watch -w src -w public/index.html -w public/assets -x run",
+    "dev": "concurrently -k -n WEB,RUST -c auto \"npm:dev:web\" \"npm:dev:rust\""
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

@@ -7,6 +7,7 @@ import type {
   Paths,
   Signal,
   SignalFilterOptions,
+  Store,
 } from '@engine/types'
 import { isPojo, pathToObj } from '@utils/paths'
 import { hasOwn } from '@utils/polyfills'
@@ -106,7 +107,6 @@ export const computed = <T>(getter: (previousValue?: T) => T): Computed<T> => {
     flags_: 17 as ReactiveFlags.Mutable | ReactiveFlags.Dirty,
     getter,
   }) as Computed<T>
-  // @ts-expect-error
   c[computedSymbol] = 1
   return c
 }
@@ -547,8 +547,8 @@ const isValidLink = (checkLink: Link, sub: ReactiveNode): boolean => {
   return false
 }
 
-export const getPath = <T = any>(path: string): T | undefined => {
-  let result = root
+export const getPath = <T = any>(path: string, store: Store = root): T | undefined => {
+  let result = store
   const split = path.split('.')
   for (const path of split) {
     if (result == null || !hasOwn(result, path)) {
@@ -586,6 +586,10 @@ const deep = (value: any, prefix = ''): any => {
           if (typeof prop === 'symbol') {
             return deepObj[prop]
           }
+          // handle our internal props
+          if (['__ds', '__host'].includes(prop)) {
+            return deepObj[prop];
+          }
           // if obj doesnt have prop OR prop is null or undefined then create a signal and default
           // to an empty string
           if (!hasOwn(deepObj, prop) || deepObj[prop]() == null) {
@@ -605,7 +609,7 @@ const deep = (value: any, prefix = ''): any => {
           // manually make a diff patch for now, shouldnt have to do this when object diffing is
           // implemented. see https://github.com/starfederation/datastar-dev/issues/274
           if (diff > 0) {
-            const patch: Record<string, any> = {}
+            const patch: Store = {}
             for (let i = newValue; i < deepObj[prop]; i++) {
               patch[i] = null
             }
@@ -672,29 +676,30 @@ const dispatch = (path?: string, value?: any) => {
 }
 
 export const mergePatch = (
-  patch: JSONPatch,
-  { ifMissing }: MergePatchArgs = {},
+    patch: JSONPatch,
+    store: Store = root,
+    {ifMissing}: MergePatchArgs = {},
 ): void => {
   beginBatch()
   for (const key in patch) {
     if (patch[key] == null) {
       if (!ifMissing) {
-        delete root[key]
+        delete store[key]
       }
     } else {
-      mergeInner(patch[key], key, root, '', ifMissing)
+      mergeInner(patch[key], key, store, '', ifMissing)
     }
   }
   endBatch()
 }
 
-export const mergePaths = (paths: Paths, options?: MergePatchArgs): void =>
-  mergePatch(pathToObj(paths), options)
+export const mergePaths = (paths: Paths, store: Store = root, options?: MergePatchArgs): void =>
+  mergePatch(pathToObj(paths), store, options)
 
 const mergeInner = (
   patch: any,
   target: string,
-  targetParent: Record<string, any>,
+  targetParent: Store,
   prefix: string,
   ifMissing: boolean | undefined,
 ): void => {
@@ -738,12 +743,12 @@ const toRegExp = (val: string | RegExp): RegExp =>
  */
 export const filtered = (
   { include = /.*/, exclude = /(?!)/ }: SignalFilterOptions = {},
-  obj: JSONPatch = root,
-): Record<string, any> => {
+  store: JSONPatch = root,
+): Store => {
   const includeRe = toRegExp(include)
   const excludeRe = toRegExp(exclude)
   const paths: Paths = []
-  const stack: [any, string][] = [[obj, '']]
+  const stack: [any, string][] = [[store, '']]
 
   while (stack.length) {
     const [node, prefix] = stack.pop()!
@@ -753,7 +758,7 @@ export const filtered = (
       if (isPojo(node[key])) {
         stack.push([node[key], `${path}.`])
       } else if (includeRe.test(path) && !excludeRe.test(path)) {
-        paths.push([path, getPath(path)])
+        paths.push([path, getPath(path, store)])
       }
     }
   }
@@ -761,4 +766,51 @@ export const filtered = (
   return pathToObj(paths)
 }
 
-export const root: Record<string, any> = deep({})
+export const root: Store = deep({})
+
+/** Creates a signals root for a given custom element. */
+export const createStore = (host?: Element): Store => {
+  const store = deep({}) as Store
+  Object.defineProperty(store, '__ds', { value: true })
+  if (host) {
+    Object.defineProperty(store, '__host', {
+      value: host,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    })
+  }
+  return store
+}
+
+/**
+ * Gets the host element for a given element.
+ * If the element is in a shadow root, returns the shadow root's host.
+ * Otherwise returns document.documentElement.
+ */
+export const getHostFor = (el: Element): Element => {
+  const rootNode = el.getRootNode() as Document | ShadowRoot
+  const host = (rootNode as ShadowRoot).host
+  const result = host ?? document.documentElement
+  return result
+}
+
+/**
+ * Gets or creates the signal store for a given element.
+ * Stores are attached to the host element (shadow root host or document.documentElement).
+ */
+export const getStoreFor = (el: Element): Store => {
+  const owner: any = getHostFor(el)
+
+  if (!owner.signals || owner.signals.__ds !== true) {
+    const initialValues = owner.signals || {}
+    owner.signals = createStore(owner)
+
+    // Merge initial values into the new store using mergePatch
+    if (Object.keys(initialValues).length > 0) {
+      mergePatch(initialValues, owner.signals)
+    }
+  }
+
+  return owner.signals as Store
+}

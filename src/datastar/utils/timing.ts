@@ -26,6 +26,7 @@ export const debounce = (
       callback(...args)
     }
 
+    // @ts-ignore
     timer = setTimeout(() => {
       if (trailing) {
         callback(...args)

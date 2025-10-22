@@ -3,7 +3,7 @@
 // Description: Creates a signal (if one doesn’t already exist) and sets up two-way data binding between it and an element’s value.
 
 import { attribute } from '@engine'
-import { effect, getPath, mergePaths } from '@engine/signals'
+import { effect, getPath, mergePaths, getStoreFor } from '@engine/signals'
 import type { Paths } from '@engine/types'
 import { aliasify, modifyCasing } from '@utils/text'
 
@@ -22,6 +22,7 @@ attribute({
   name: 'bind',
   requirement: 'exclusive',
   apply({ el, key, mods, value, error }) {
+    const store = getStoreFor(el)
     const signalName = key != null ? modifyCasing(key, mods) : value
 
     let get = (el: any, type: string) =>
@@ -105,7 +106,7 @@ attribute({
                   }),
               ),
             ).then(() => {
-              mergePaths([[signalName, signalFiles]])
+              mergePaths([[signalName, signalFiles]], store)
             })
           }
 
@@ -158,7 +159,7 @@ attribute({
       }
     }
 
-    const initialValue = getPath(signalName)
+    const initialValue = getPath(signalName, store)
     const type = typeof initialValue
 
     let path = signalName
@@ -181,20 +182,20 @@ attribute({
         }
         i++
       }
-      mergePaths(paths, { ifMissing: true })
+      mergePaths(paths, store, {ifMissing: true})
       path = `${path}.${i}`
     } else {
-      mergePaths([[path, get(el, type)]], {
+      mergePaths([[path, get(el, type)]], store, {
         ifMissing: true,
       })
     }
 
     const syncSignal = () => {
-      const signalValue = getPath(path)
+      const signalValue = getPath(path, store)
       if (signalValue != null) {
         const value = get(el, typeof signalValue)
         if (value !== empty) {
-          mergePaths([[path, value]])
+          mergePaths([[path, value]], store)
         }
       }
     }
@@ -202,7 +203,7 @@ attribute({
     el.addEventListener('input', syncSignal)
     el.addEventListener('change', syncSignal)
     const cleanup = effect(() => {
-      set(getPath(path))
+      set(getPath(path, store))
     })
 
     return () => {

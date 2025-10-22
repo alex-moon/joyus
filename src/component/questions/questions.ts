@@ -9,7 +9,6 @@ export class Questions extends Component {
     }
 
     public checkLength() {
-        console.log('check length called yay');
     }
 }
 window.customElements.define('app-questions', Questions);

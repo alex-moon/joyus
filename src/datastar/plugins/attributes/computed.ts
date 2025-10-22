@@ -3,7 +3,7 @@
 // Description: Creates a signal that is computed based on an expression.
 
 import { attribute } from '@engine'
-import { computed, mergePaths, mergePatch } from '@engine/signals'
+import {computed, mergePaths, mergePatch, getStoreFor} from '@engine/signals'
 import { modifyCasing } from '@utils/text'
 import { updateLeaves } from '@utils/paths'
 
@@ -13,9 +13,10 @@ attribute({
     value: 'must',
   },
   returnsValue: true,
-  apply({ key, mods, rx, error }) {
+  apply({ el, key, mods, rx, error }) {
+    const store = getStoreFor(el)
     if (key) {
-      mergePaths([[modifyCasing(key, mods), computed(rx)]])
+      mergePaths([[modifyCasing(key, mods), computed(rx)]], store)
     } else {
       const patch = Object.assign({}, rx() as Record<string, () => any>)
       updateLeaves(patch, (old) => {
@@ -25,7 +26,7 @@ attribute({
           throw error('ComputedExpectedFunction')
         }
       })
-      mergePatch(patch)
+      mergePatch(patch, store)
     }
   },
 })

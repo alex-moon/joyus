@@ -343,7 +343,6 @@ const getLines = (onLine: (line: Uint8Array, fieldLength: number) => void) => {
               fieldLength = position - lineStart
             }
             break
-          // @ts-expect-error:7029 \r case below should fallthrough to \n:
           // biome-ignore lint/suspicious/noFallthroughSwitchClause: intentional fallthrough for CR to LF
           case 13: // \r
             discardTrailingNewline = true
@@ -616,6 +615,7 @@ const fetchEventSource = (
             // check if we need to retry:
             const interval: any = onerror?.(err) || retryInterval
             clearTimeout(retryTimer)
+            // @ts-ignore
             retryTimer = setTimeout(create, interval)
             retryInterval = Math.min(
               retryInterval * retryScaler,

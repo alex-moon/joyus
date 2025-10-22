@@ -159,7 +159,6 @@ const applyPatchMode = (
   for (const target of targets) {
     const cloned = element.cloneNode(true) as Element
     execute(cloned)
-    // @ts-expect-error
     target[action](cloned)
   }
 }

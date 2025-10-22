@@ -4,7 +4,7 @@
 
 import { action } from '@engine'
 import {
-  filtered,
+  filtered, getStoreFor,
   mergePatch,
   startPeeking,
   stopPeeking,
@@ -14,13 +14,14 @@ import { updateLeaves } from '@utils/paths'
 
 action({
   name: 'toggleAll',
-  apply(_, filter: SignalFilterOptions) {
+  apply({el}, filter: SignalFilterOptions) {
+    const store = getStoreFor(el)
     // peek because in an effect you would be subscribing to signals and then setting them which
     // would cause an infinite loop and why would you want to infinite loop on purpose
     startPeeking()
     const masked = filtered(filter)
     updateLeaves(masked, (oldValue: any) => !oldValue)
-    mergePatch(masked)
+    mergePatch(masked, store)
     stopPeeking()
   },
 })
