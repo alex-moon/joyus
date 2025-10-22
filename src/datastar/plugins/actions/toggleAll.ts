@@ -19,7 +19,7 @@ action({
     // peek because in an effect you would be subscribing to signals and then setting them which
     // would cause an infinite loop and why would you want to infinite loop on purpose
     startPeeking()
-    const masked = filtered(filter)
+    const masked = filtered(filter, store)
     updateLeaves(masked, (oldValue: any) => !oldValue)
     mergePatch(masked, store)
     stopPeeking()

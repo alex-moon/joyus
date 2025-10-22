@@ -2,76 +2,71 @@
   <template shadowrootmode="open">
     <link rel="stylesheet" href="/assets/css/component/questions.css"/>
 
+    <div class="progress-container">
+      <div class="progress-bar" data-style:width="($currentStep / 3 * 100) + '%'"></div>
+    </div>
+
     <!-- Start screen -->
-    <section data-show="$currentStep === -1" class="start-screen">
+    <section data-show="is('start')" class="start-screen">
       <article class="welcome-card">
         <h1>Ready to reflect?</h1>
         <p>Turn today's frustrations into tomorrow's connections</p>
-        <button class="primary" data-on-click="$currentStep = 0">
+        <button class="primary" data-on:click="next()">
           Answer some questions
         </button>
       </article>
     </section>
 
     <!-- Question 0 -->
-    <section data-show="$currentStep === 0" class="question-section">
-      <div class="progress-container">
-        <div class="progress-bar" data-style-width="(($currentStep + 1) / 3 * 100) + '%'"></div>
-      </div>
+    <section data-show="is('frustration')" class="question-section">
       <article class="question-card">
         <h2>Write about something that upset or annoyed you today</h2>
         <textarea
-                data-bind="answers[0]"
-                data-on-input="ctrl['questions'].checkLength()"
+                data-bind="frustration"
+                data-on:input="checkLength()"
                 placeholder="What frustrated you?"
-                autofocus
+                id="frustration"
         ></textarea>
         <p class="character-count">
-          <span data-text="$answers[0].length"></span> / 50 characters
-          <span data-show="$answers[0].length >= 50" class="complete">✓</span>
+          <span data-text="$frustration.length"></span> / <span data-text="$MAX_LENGTH"></span> characters
         </p>
       </article>
     </section>
 
     <!-- Question 1 -->
-    <section data-show="$currentStep === 1" class="question-section">
-      <div class="progress-container">
-        <div class="progress-bar" data-style-width="(($currentStep + 1) / 3 * 100) + '%'"></div>
-      </div>
+    <section data-show="is('context')" class="question-section">
       <article class="question-card">
         <h2>What was the context? What were you doing?</h2>
         <textarea
-                data-bind="answers[1]"
-                data-on-input="ctrl['questions'].checkLength()"
+                data-bind="context"
+                data-on:input="checkLength()"
                 placeholder="Describe the situation..."
-                autofocus
+                id="context"
         ></textarea>
         <p class="character-count">
-          <span data-text="$answers[1].length"></span> / 50 characters
+          <span data-text="$context.length"></span> / <span data-text="$MAX_LENGTH"></span> characters
         </p>
       </article>
     </section>
 
     <!-- Question 2 (Final) -->
-    <section data-show="$currentStep === 2" class="question-section">
-      <div class="progress-container">
-        <div class="progress-bar" data-style-width="(($currentStep + 1) / 3 * 100) + '%'"></div>
-      </div>
+    <section data-show="is('joy')" class="question-section">
       <article class="question-card">
         <h2>What joy do you find in that context or activity?</h2>
         <textarea
-                data-bind="answers[2]"
+                data-bind="joy"
+                data-on:input="checkLength()"
                 placeholder="Think about the positive side..."
-                autofocus
+                id="joy"
         ></textarea>
         <footer class="question-footer">
           <p class="character-count">
-            <span data-text="$answers[2].length"></span> / 50 characters
+            <span data-text="$joy.length"></span> / <span data-text="$MAX_LENGTH"></span> characters
           </p>
           <button
-                  data-show="$answers[2].length >= 50"
+                  data-show="$joy.length >= $MAX_LENGTH"
                   class="primary"
-                  data-on-click="$$post('/api/joys', {answers: $answers})"
+                  data-on:click="@post('/api/joys')"
           >
             Submit & Find Questions
           </button>

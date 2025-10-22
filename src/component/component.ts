@@ -7,6 +7,6 @@ export class Component extends HTMLElement {
         if (!this.shadowRoot) {
             throw new Error('Expected shadowRoot to be present');
         }
-        apply(this.shadowRoot);
+        apply(this);
     }
 }

@@ -4,7 +4,7 @@
 
 import { action } from '@engine'
 import { DATASTAR_FETCH_EVENT } from '@engine/consts'
-import { filtered } from '@engine/signals'
+import {filtered, getStoreFor} from '@engine/signals'
 import type {
   DatastarFetchEvent,
   HTMLOrSVG,
@@ -33,6 +33,7 @@ const createHttpMethod = (name: string, method: string): void =>
         requestCancellation = 'auto',
       }: FetchArgs = {},
     ) => {
+      const store = getStoreFor(el)
       const controller =
         requestCancellation instanceof AbortController
           ? requestCancellation
@@ -135,7 +136,7 @@ const createHttpMethod = (name: string, method: string): void =>
           const queryParams = new URLSearchParams(urlInstance.search)
 
           if (contentType === 'json') {
-            const res = JSON.stringify(filtered({ include, exclude }))
+            const res = JSON.stringify(filtered({ include, exclude }, store))
             if (method === 'GET') {
               queryParams.set('datastar', res)
             } else {

@@ -3,7 +3,7 @@
 // Description: Sets the text content of an element to a reactive JSON stringified version of signals.
 
 import { attribute } from '@engine'
-import { effect, filtered } from '@engine/signals'
+import {effect, filtered, getStoreFor} from '@engine/signals'
 import type { SignalFilterOptions } from '@engine/types'
 import { jsStrToObject } from '@utils/text'
 
@@ -13,6 +13,7 @@ attribute({
     key: 'denied',
   },
   apply({ el, value, mods }) {
+    const store = getStoreFor(el)
     const spaces = mods.has('terse') ? 0 : 2
     let filters: SignalFilterOptions = {}
     if (value) {
@@ -21,7 +22,7 @@ attribute({
 
     const callback = () => {
       observer.disconnect()
-      el.textContent = JSON.stringify(filtered(filters), null, spaces)
+      el.textContent = JSON.stringify(filtered(filters, store), null, spaces)
       observer.observe(el, {
         childList: true,
         characterData: true,

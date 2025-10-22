@@ -1,6 +1,6 @@
 import { DATASTAR_FETCH_EVENT, DSP, DSS } from '@engine/consts'
 import { snake } from '@utils/text'
-import {getStoreFor} from '@engine/signals'
+import {getHostFor, getStoreFor} from '@engine/signals'
 import type {
   ActionPlugin,
   ActionContext,
@@ -187,7 +187,8 @@ export const apply = (
   if (isHTMLOrSVG(root)) {
     applyEls([root], onlyNew)
   }
-  applyEls(root.querySelectorAll<HTMLOrSVG>('*'), onlyNew)
+  const shadowRoot = (root as HTMLElement).shadowRoot || root;
+  applyEls(shadowRoot.querySelectorAll<HTMLOrSVG>('*'), onlyNew)
 
   mutationObserver.observe(root, {
     subtree: true,
@@ -390,6 +391,7 @@ const genRx = (
   }
 
   try {
+    expr = `with(this){${expr}}`
     const fn = Function('el', '$', '__action', 'evt', ...argNames, expr)
     return (el: HTMLOrSVG, ...args: any[]) => {
       const action = (name: string, evt: Event | undefined, ...args: any[]) => {
@@ -416,7 +418,8 @@ const genRx = (
       }
       try {
         const store = getStoreFor(el)
-        return fn(el, store, action, undefined, ...args)
+        const host = getHostFor(el)
+        return fn.call(host, el, store, action, undefined, ...args)
       } catch (e: any) {
         console.error(e)
         throw error(
