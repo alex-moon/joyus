@@ -146,6 +146,10 @@ const observe = (mutations: MutationRecord[]) => {
         if (isHTMLOrSVG(node)) {
           cleanupEls([node])
           cleanupEls(node.querySelectorAll<HTMLOrSVG>('*'))
+          const sr = (node as HTMLElement).shadowRoot
+          if (sr) {
+            cleanupEls(sr.querySelectorAll<HTMLOrSVG>('*'))
+          }
         }
       }
 
@@ -153,6 +157,10 @@ const observe = (mutations: MutationRecord[]) => {
         if (isHTMLOrSVG(node)) {
           applyEls([node])
           applyEls(node.querySelectorAll<HTMLOrSVG>('*'))
+          const sr = (node as HTMLElement).shadowRoot
+          if (sr) {
+            applyEls(sr.querySelectorAll<HTMLOrSVG>('*'))
+          }
         }
       }
     } else if (
@@ -177,7 +185,6 @@ const observe = (mutations: MutationRecord[]) => {
   }
 }
 
-// TODO: mutation observer per root so applying to web component doesnt overwrite main observer
 const mutationObserver = new MutationObserver(observe)
 
 export const apply = (
@@ -190,11 +197,17 @@ export const apply = (
   const shadowRoot = (root as HTMLElement).shadowRoot || root;
   applyEls(shadowRoot.querySelectorAll<HTMLOrSVG>('*'), onlyNew)
 
-  mutationObserver.observe(root, {
+  mutationObserver.observe(shadowRoot, {
     subtree: true,
     childList: true,
     attributes: true,
   })
+
+  if (shadowRoot !== root) {
+    mutationObserver.observe(root, {
+      attributes: true,
+    })
+  }
 }
 
 const applyAttributePlugin = (
