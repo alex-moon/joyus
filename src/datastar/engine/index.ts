@@ -118,6 +118,45 @@ const aliasedIgnoreAttr = `[${aliasedIgnore}]`
 const shouldIgnore = (el: HTMLOrSVG) =>
   el.hasAttribute(`${aliasedIgnore}__self`) || !!el.closest(aliasedIgnoreAttr)
 
+const OBSERVER_CLEANUP_KEY = '__observer__'
+
+const observeRoot = (hostOrRoot: HTMLOrSVG | ShadowRoot, maybeHost?: HTMLOrSVG) => {
+  // Don’t attach twice: if we already registered an observer cleanup for this root, skip
+  const keyOwner = isHTMLOrSVG(hostOrRoot) ? hostOrRoot : (maybeHost as HTMLOrSVG) || (document.documentElement as any)
+  let cleanups = removals.get(keyOwner)
+  if (cleanups && cleanups.has(OBSERVER_CLEANUP_KEY)) return
+
+  const mo = new MutationObserver(observe)
+
+  // If this is a shadow root, observe it for subtree mutations
+  if ((hostOrRoot as ShadowRoot as any).host) {
+    mo.observe(hostOrRoot as ShadowRoot, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+    })
+  } else {
+    // Regular root (e.g., documentElement or any element scope)
+    mo.observe(hostOrRoot as Element, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+    })
+  }
+
+  // If we were passed a separate host (when host has a shadowRoot), observe host attributes as well
+  if (maybeHost && hostOrRoot !== maybeHost) {
+    mo.observe(maybeHost, { attributes: true })
+  }
+
+  // Register a cleanup on the key owner so when it’s removed we disconnect
+  if (!cleanups) {
+    cleanups = new Map()
+    removals.set(keyOwner, cleanups)
+  }
+  cleanups.set(OBSERVER_CLEANUP_KEY, () => mo.disconnect())
+}
+
 const applyEls = (els: Iterable<HTMLOrSVG>, onlyNew?: boolean): void => {
   for (const el of els) {
     if (!shouldIgnore(el)) {
@@ -159,7 +198,10 @@ const observe = (mutations: MutationRecord[]) => {
           applyEls(node.querySelectorAll<HTMLOrSVG>('*'))
           const sr = (node as HTMLElement).shadowRoot
           if (sr) {
+            // Initialize plugins in the shadow subtree
             applyEls(sr.querySelectorAll<HTMLOrSVG>('*'))
+            // Start observing the new shadow root so future changes are caught
+            observeRoot(sr, node as HTMLOrSVG)
           }
         }
       }
@@ -185,28 +227,38 @@ const observe = (mutations: MutationRecord[]) => {
   }
 }
 
-const mutationObserver = new MutationObserver(observe)
-
 export const apply = (
   root: HTMLOrSVG | ShadowRoot = document.documentElement,
 ): void => {
   const onlyNew = root === document.documentElement;
+
+  // Apply plugins to the immediate root if it’s an element
   if (isHTMLOrSVG(root)) {
     applyEls([root], onlyNew)
   }
+
+  // Prefer shadowRoot for querying (mirrors your current logic)
   const shadowRoot = (root as HTMLElement).shadowRoot || root;
+
+  // Apply to descendants within the chosen query scope
   applyEls(shadowRoot.querySelectorAll<HTMLOrSVG>('*'), onlyNew)
 
-  mutationObserver.observe(shadowRoot, {
-    subtree: true,
-    childList: true,
-    attributes: true,
-  })
-
+  // Start observing this scope
   if (shadowRoot !== root) {
-    mutationObserver.observe(root, {
-      attributes: true,
-    })
+    // A host element with a shadow root
+    observeRoot(shadowRoot as ShadowRoot, root as HTMLOrSVG)
+  } else {
+    // A regular element or the document root
+    observeRoot(root)
+  }
+
+  // Optionally walk existing hosts to observe their shadow roots as well
+  for (const el of (shadowRoot as Element).querySelectorAll<HTMLElement>('*')) {
+    const sr = (el as HTMLElement).shadowRoot
+    if (sr) {
+      applyEls(sr.querySelectorAll<HTMLOrSVG>('*'), onlyNew)
+      observeRoot(sr, el as HTMLOrSVG)
+    }
   }
 }
 
