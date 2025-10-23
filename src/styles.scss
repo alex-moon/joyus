@@ -48,6 +48,7 @@ body {
     align-items: flex-start;
     gap: $padding;
     color: $muted;
+    box-sizing: unset;
 
     .logo {
       img {
@@ -88,6 +89,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    box-sizing: unset;
 
     @include respond-to(mobile) {
       padding: $mobile-padding;
