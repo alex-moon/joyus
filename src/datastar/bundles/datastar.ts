@@ -1,5 +1,4 @@
 export { action, actions, attribute, watcher } from '@engine'
-export { morph } from '@engine/morph'
 export {
   beginBatch,
   computed,

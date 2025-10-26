@@ -17,8 +17,7 @@ attribute({
   requirement: 'must',
   argNames: ['evt'],
   apply({ el, key, mods, rx }) {
-    let target: Element | Window | Document = el
-    if (mods.has('window')) target = window
+    let target: Element = el
     let callback = (evt?: Event) => {
       if (evt) {
         if (mods.has('prevent')) {
@@ -39,23 +38,7 @@ attribute({
       passive: mods.has('passive'),
       once: mods.has('once'),
     }
-    if (mods.has('outside')) {
-      target = document
-      const cb = callback
-      callback = (evt?: Event) => {
-        if (!el.contains(evt?.target as HTMLElement)) {
-          cb(evt)
-        }
-      }
-    }
     const eventName = modifyCasing(key, mods, 'kebab')
-    // Listen for Datastar events on the document
-    if (
-      eventName === DATASTAR_FETCH_EVENT ||
-      eventName === DATASTAR_SIGNAL_PATCH_EVENT
-    ) {
-      target = document
-    }
     // Prevent default on form submit events
     if (el instanceof HTMLFormElement && eventName === 'submit') {
       const cb = callback

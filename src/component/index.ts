@@ -1,2 +1,2 @@
 require('./app/app');
-require('./questions/questions');
+require('./joy_form/joy_form');

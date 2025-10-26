@@ -87,6 +87,7 @@ export type AttributePlugin<
 }
 
 export type WatcherContext = {
+  el: HTMLOrSVG
   error: ErrorFn
 }
 

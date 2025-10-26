@@ -21,7 +21,6 @@ const createHttpMethod = (name: string, method: string): void =>
       { el, evt, error },
       url: string,
       {
-        selector,
         headers: userHeaders,
         contentType = 'json',
         filterSignals: { include = /.*/, exclude = /(^|\.)_/ } = {},
@@ -143,11 +142,9 @@ const createHttpMethod = (name: string, method: string): void =>
               req.body = res
             }
           } else if (contentType === 'form') {
-            const formEl = (
-              selector ? document.querySelector(selector) : el.closest('form')
-            ) as HTMLFormElement
+            const formEl = el.closest('form') as HTMLFormElement;
             if (!formEl) {
-              throw error('FetchFormNotFound', { action, selector })
+              throw error('FetchFormNotFound', { action })
             }
 
             // Validate the form
@@ -244,19 +241,18 @@ const dispatchFetch = (
   type: string,
   el: HTMLOrSVG,
   argsRaw: Record<string, string>,
-) =>
+) => {
   document.dispatchEvent(
-    new CustomEvent<DatastarFetchEvent>(DATASTAR_FETCH_EVENT, {
-      detail: { type, el, argsRaw },
-    }),
+      new CustomEvent<DatastarFetchEvent>(DATASTAR_FETCH_EVENT, {
+        detail: {type, el, argsRaw},
+      }),
   )
+}
 
 const isWrongContent = (err: any) => `${err}`.includes('text/event-stream')
 
 type ResponseOverrides =
   | {
-      selector?: string
-      mode?: string
       useViewTransition?: boolean
     }
   | {
@@ -273,7 +269,6 @@ export type FetchArgs = {
   responseOverrides?: ResponseOverrides
   contentType?: 'json' | 'form'
   filterSignals?: SignalFilterOptions
-  selector?: string
   requestCancellation?: 'auto' | 'disabled' | AbortController
 }
 
@@ -550,8 +545,6 @@ const fetchEventSource = (
             response,
             'elements',
             overrides,
-            'selector',
-            'mode',
             'useViewTransition',
           )
         }

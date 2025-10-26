@@ -5,7 +5,11 @@ export class Component extends HTMLElement {
 
     connectedCallback() {
         if (!this.shadowRoot) {
-            throw new Error('Expected shadowRoot to be present');
+            const root = this.attachShadow({ mode: 'open' });
+            const template = this.querySelector('template[shadowrootmode="open"]');
+            if (template) {
+                root.appendChild((template as any).content.cloneNode(true));
+            }
         }
         apply(this);
     }

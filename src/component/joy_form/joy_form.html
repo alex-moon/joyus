@@ -1,6 +1,6 @@
-<app-questions id="questions">
+<app-joy-form id="joy-form">
   <template shadowrootmode="open">
-    <link rel="stylesheet" href="/assets/css/component/questions.css"/>
+    <link rel="stylesheet" href="/assets/css/component/joy_form.css"/>
 
     <div class="progress-container">
       <div class="progress-bar" data-style:width="($currentStep / 3 * 100) + '%'"></div>
@@ -12,12 +12,12 @@
         <h1>Ready to reflect?</h1>
         <p>Turn today's frustrations into tomorrow's connections</p>
         <button class="primary" data-on:click="next()">
-          Answer some questions
+          Start
         </button>
       </article>
     </section>
 
-    <!-- Question 0 -->
+    <!-- Step 0 -->
     <section data-show="is('frustration')" class="question-section">
       <article class="question-card">
         <h2>Write about something that upset or annoyed you today</h2>
@@ -33,7 +33,7 @@
       </article>
     </section>
 
-    <!-- Question 1 -->
+    <!-- Step 1 -->
     <section data-show="is('context')" class="question-section">
       <article class="question-card">
         <h2>What was the context? What were you doing?</h2>
@@ -49,7 +49,7 @@
       </article>
     </section>
 
-    <!-- Question 2 (Final) -->
+    <!-- Step 2 (Final) -->
     <section data-show="is('joy')" class="question-section">
       <article class="question-card">
         <h2>What joy do you find in that context or activity?</h2>
@@ -66,12 +66,12 @@
           <button
                   data-show="$joy.length >= $MAX_LENGTH"
                   class="primary"
-                  data-on:click="@post('/api/joys')"
+                  data-on:click="@post('/joy-form')"
           >
-            Submit & Find Questions
+            Submit
           </button>
         </footer>
       </article>
     </section>
   </template>
-</app-questions>
+</app-joy-form>
