@@ -19,12 +19,11 @@ pub struct App {
 /// GET /app — compose the app by rendering the Questions page and embedding it
 pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
     let user = state.users.summary().await;
-    let items = state.questions.list_for_user(&user.id).await;
 
-    let questions_html = Questions { user, items }
+    let questions = Questions { user }
         .render()
         .map_err(crate::service::internal_error)?;
-    let app = App { questions: questions_html };
+    let app = App { questions };
     let html = app.render().map_err(crate::service::internal_error)?;
     Ok(Html(html))
 }

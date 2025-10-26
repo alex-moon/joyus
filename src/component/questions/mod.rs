@@ -7,7 +7,6 @@ use axum::Router;
 use serde::Deserialize;
 
 use crate::service::{
-    questions::Question,
     user::UserSummary,
     state::AppState,
 };
@@ -17,22 +16,13 @@ use crate::service::{
 #[template(path = "component/questions/questions.html")]
 pub struct Questions {
     pub user: UserSummary,
-    pub items: Vec<Question>,
-}
-
-/// Reusable list fragment for SSE updates and reuse in other pages
-#[derive(Template)]
-#[template(path = "component/questions/_list.html")]
-pub struct QuestionsList {
-    pub items: Vec<Question>,
 }
 
 /// GET /questions — gather data and render the full questions section
 pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
     let user = state.users.summary().await;
-    let items = state.questions.list_for_user(&user.id).await;
 
-    let tpl = Questions { user, items };
+    let tpl = Questions { user };
     let html = tpl.render().map_err(crate::service::internal_error)?;
     Ok(Html(html))
 }
@@ -57,7 +47,7 @@ pub async fn create(
     state.questions.create(&user.id, title.to_string()).await;
 
     let items = state.questions.list_for_user(&user.id).await;
-    let html = QuestionsList { items }
+    let html = Questions { user }
         .render()
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
