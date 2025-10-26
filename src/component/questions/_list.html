@@ -1,0 +1,8 @@
+{# component/questions/_list.html #}
+<ul class="questions">
+  {% for q in items %}
+    <li class="question">{{ q.title|e }}</li>
+  {% else %}
+    <li class="empty">No questions yet</li>
+  {% endfor %}
+</ul>

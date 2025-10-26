@@ -1,8 +1,14 @@
 use askama::Template;
+use axum::extract::State;
 use axum::response::Html;
-use axum::Router;
 use axum::routing::get;
-use crate::{component, index};
+use axum::http::StatusCode;
+use axum::Router;
+
+use crate::component::questions::Questions;
+use crate::service::{
+    state::AppState,
+};
 
 #[derive(Template)]
 #[template(path = "component/app/app.html")]
@@ -10,19 +16,20 @@ pub struct App {
     questions: String,
 }
 
-pub async fn render() -> String {
-    let Html(questions) = component::questions::show().await;
-    let app = App {questions};
-    app.render().unwrap()
+/// GET /app — compose the app by rendering the Questions page and embedding it
+pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
+    let user = state.users.summary().await;
+    let items = state.questions.list_for_user(&user.id).await;
+
+    let questions_html = Questions { user, items }
+        .render()
+        .map_err(crate::service::internal_error)?;
+    let app = App { questions: questions_html };
+    let html = app.render().map_err(crate::service::internal_error)?;
+    Ok(Html(html))
 }
 
-pub async fn show() -> Html<String> {
-    Html(render().await)
-}
-
-pub fn router() -> Router {
+pub fn router() -> Router<AppState> {
     Router::new()
-        .nest("/app", Router::new()
-            .route("/", get(show))
-        )
+        .nest("/app", Router::new().route("/", get(show)))
 }
