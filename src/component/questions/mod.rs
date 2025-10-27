@@ -6,6 +6,7 @@ use axum::routing::{get, post};
 use axum::Router;
 use serde::Deserialize;
 
+use crate::component::Renderable;
 use crate::service::{
     user::UserSummary,
     state::AppState,
@@ -16,6 +17,17 @@ use crate::service::{
 #[template(path = "component/questions/questions.html")]
 pub struct Questions {
     pub user: UserSummary,
+}
+
+#[async_trait::async_trait]
+impl Renderable for Questions {
+    async fn render_with_state(state: &AppState) -> Result<Html<String>, String> {
+        let user = state.users.summary().await;
+        let html = Questions { user }
+            .render()
+            .map_err(|e| e.to_string())?;
+        Ok(Html(html))
+    }
 }
 
 /// GET /questions — gather data and render the full questions section

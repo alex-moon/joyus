@@ -5,7 +5,7 @@ use axum::routing::get;
 use axum::http::StatusCode;
 use axum::Router;
 
-use crate::component::questions::Questions;
+use crate::component::{Renderable, questions::Questions};
 use crate::service::{
     state::AppState,
 };
@@ -18,11 +18,10 @@ pub struct App {
 
 /// GET /app — compose the app by rendering the Questions page and embedding it
 pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
-    let user = state.users.summary().await;
+    let Html(questions) = Questions::render_with_state(&state)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
-    let questions = Questions { user }
-        .render()
-        .map_err(crate::service::internal_error)?;
     let app = App { questions };
     let html = app.render().map_err(crate::service::internal_error)?;
     Ok(Html(html))
