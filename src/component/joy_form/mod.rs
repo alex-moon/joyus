@@ -1,5 +1,6 @@
 use askama::Template;
-use axum::extract::{Form, State};
+use axum::extract::{State};
+use axum::Json;
 use axum::http::StatusCode;
 use axum::response::Html;
 use axum::routing::{get, post};
@@ -10,7 +11,7 @@ use crate::component::Renderable;
 use crate::service::state::AppState;
 use crate::service::joy::Point;
 
-/// Full Joy Form page template
+/// Full Joy Json page template
 #[derive(Template)]
 #[template(path = "component/joy_form/joy_form.html")]
 pub struct JoyForm {
@@ -49,7 +50,7 @@ struct NewJoy {
 
 pub async fn create(
     State(state): State<AppState>,
-    Form(form): Form<NewJoy>,
+    Json(form): Json<NewJoy>,
 ) -> Result<Html<String>, (StatusCode, String)> {
     let user = state.users.summary().await;
 
@@ -90,5 +91,4 @@ pub fn router() -> Router<AppState> {
             "/joy-form",
             Router::new().route("/", get(show)).route("/", post(create)),
         )
-        .route("/api/joys", post(create))
 }

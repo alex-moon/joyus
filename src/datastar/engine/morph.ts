@@ -306,6 +306,14 @@ const morphNode = (
       return oldNode
     }
 
+    // @todo here is the key bit - tbh we should probably just replace all the non-component logic >:(
+    const tpl = newElt.querySelector('template[shadowrootmode]');
+    if (tpl) {
+      const replacement = newElt.cloneNode(true) as Element;
+      oldElt.replaceWith(replacement);
+      return replacement;
+    }
+
     //  many bothans died to bring us this information:
     //  https://github.com/patrick-steele-idem/morphdom/blob/master/src/specialElHandlers.js
     //  https://github.com/choojs/nanomorph/blob/master/lib/morph.js#L113

@@ -83,6 +83,7 @@ document.addEventListener(DATASTAR_FETCH_EVENT, ((
   if (plugin) {
     plugin.apply(
       {
+        el: evt.detail.el as HTMLOrSVG,
         error: error.bind(0, {
           plugin: { type: 'watcher', name: plugin.name },
           element: {
@@ -250,15 +251,6 @@ export const apply = (
   } else {
     // A regular element or the document root
     observeRoot(root)
-  }
-
-  // Optionally walk existing hosts to observe their shadow roots as well
-  for (const el of (shadowRoot as Element).querySelectorAll<HTMLElement>('*')) {
-    const sr = (el as HTMLElement).shadowRoot
-    if (sr) {
-      applyEls(sr.querySelectorAll<HTMLOrSVG>('*'), onlyNew)
-      observeRoot(sr, el as HTMLOrSVG)
-    }
   }
 }
 

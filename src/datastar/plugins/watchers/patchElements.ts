@@ -6,6 +6,7 @@ import { watcher } from '@engine'
 import type { WatcherContext } from '@engine/types'
 import { morph } from '@engine/morph'
 import { supportsViewTransitions } from '@utils/view-transitions'
+import {getHostFor} from "@engine/signals";
 
 type PatchElementsMode =
   | 'remove'
@@ -64,7 +65,7 @@ watcher({
 })
 
 const onPatchElements = (
-  { error }: WatcherContext,
+  { el, error }: WatcherContext,
   { elements, selector, mode }: PatchElementsArgs,
 ) => {
   const elementsWithSvgsRemoved = elements.replace(
@@ -106,7 +107,7 @@ const onPatchElements = (
       } else if (child instanceof HTMLHeadElement) {
         target = document.head
       } else {
-        target = document.getElementById(child.id)!
+        target = getHostFor(el)!
         if (!target) {
           console.warn(error('PatchElementsNoTargetsFound'), {
             element: { id: child.id },

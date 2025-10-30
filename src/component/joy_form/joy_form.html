@@ -12,7 +12,7 @@
         <h1>Ready to reflect?</h1>
         <p>Turn today's frustrations into tomorrow's connections</p>
         <button class="primary" data-on:click="next()">
-          Start the Joy Form
+          Start
         </button>
       </article>
     </section>
@@ -66,9 +66,9 @@
           <button
                   data-show="$joy.length >= $MAX_LENGTH"
                   class="primary"
-                  data-on:click="@post('/api/joys')"
+                  data-on:click="@post('/joy-form')"
           >
-            Submit Joy Form
+            Submit
           </button>
         </footer>
       </article>

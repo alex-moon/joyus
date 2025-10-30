@@ -35,27 +35,18 @@ pub struct Joy {
 pub struct JoyService {
     // very simple in-memory store keyed by user id
     inner: Arc<RwLock<HashMap<Uuid, Vec<Joy>>>>,
-    max_len: usize,
 }
 
 impl JoyService {
     pub fn new() -> Self {
-        Self { inner: Arc::new(RwLock::new(HashMap::new())), max_len: 100 }
-    }
-
-    pub fn with_max_len(max_len: usize) -> Self {
-        Self { inner: Arc::new(RwLock::new(HashMap::new())), max_len }
+        Self { inner: Arc::new(RwLock::new(HashMap::new())) }
     }
 
     fn validate(&self, frustration: &str, context: &str, joy: &str) -> Result<(), String> {
-        let max = self.max_len;
         let check = |name: &str, value: &str| -> Result<(), String> {
             let t = value.trim();
             if t.is_empty() {
                 return Err(format!("{} cannot be empty", name));
-            }
-            if t.len() > max {
-                return Err(format!("{} must be at most {} characters", name, max));
             }
             Ok(())
         };
