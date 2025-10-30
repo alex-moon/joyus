@@ -9,7 +9,7 @@ const STEPS: string[] = [
     'joy',
 ];
 
-export class Questions extends Component {
+export class JoyForm extends Component {
     protected signals = {
         MAX_LENGTH: 100,
         currentStep: 0,
@@ -59,4 +59,4 @@ export class Questions extends Component {
         }
     }
 }
-window.customElements.define('app-questions', Questions);
+window.customElements.define('app-joy-form', JoyForm);

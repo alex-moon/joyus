@@ -2,7 +2,7 @@ pub mod event;
 pub mod sse;
 pub mod state;
 pub mod user;
-pub mod questions;
+pub mod joy;
 
 use axum::http::StatusCode;
 

@@ -7,59 +7,73 @@ use axum::Router;
 use serde::Deserialize;
 
 use crate::component::Renderable;
-use crate::service::{
-    user::UserSummary,
-    state::AppState,
-};
+use crate::service::state::AppState;
+use crate::service::joy::Point;
 
-/// Full Questions page template
+/// Full Joy Form page template
 #[derive(Template)]
-#[template(path = "component/questions/questions.html")]
-pub struct Questions {
+#[template(path = "component/joy_form/joy_form.html")]
+pub struct JoyForm {
     pub user: UserSummary,
 }
 
+use crate::service::user::UserSummary;
+
 #[async_trait::async_trait]
-impl Renderable for Questions {
+impl Renderable for JoyForm {
     async fn render_with_state(state: &AppState) -> Result<Html<String>, String> {
         let user = state.users.summary().await;
-        let html = Questions { user }
+        let html = JoyForm { user }
             .render()
             .map_err(|e| e.to_string())?;
         Ok(Html(html))
     }
 }
 
-/// GET /questions — gather data and render the full questions section
 pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
     let user = state.users.summary().await;
 
-    let tpl = Questions { user };
+    let tpl = JoyForm { user };
     let html = tpl.render().map_err(crate::service::internal_error)?;
     Ok(Html(html))
 }
 
 #[derive(Deserialize)]
-struct NewQuestion {
-    title: String,
+struct NewJoy {
+    frustration: String,
+    context: String,
+    joy: String,
+    lon: Option<f64>,
+    lat: Option<f64>,
 }
 
-/// POST /questions — create a new question, publish SSE with list fragment, and return latest HTML
 pub async fn create(
     State(state): State<AppState>,
-    Form(form): Form<NewQuestion>,
+    Form(form): Form<NewJoy>,
 ) -> Result<Html<String>, (StatusCode, String)> {
     let user = state.users.summary().await;
 
-    let title = form.title.trim();
-    if title.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, "title cannot be empty".into()));
+    let point = match (form.lon, form.lat) {
+        (Some(lon), Some(lat)) => Some(Point::new(lon, lat).map_err(|e| (StatusCode::BAD_REQUEST, e))?),
+        _ => None,
+    };
+
+    let res = state
+        .joys
+        .create(
+            &user.id,
+            point,
+            form.frustration.clone(),
+            form.context.clone(),
+            form.joy.clone(),
+        )
+        .await;
+
+    if let Err(err) = res {
+        return Err((StatusCode::BAD_REQUEST, err));
     }
 
-    state.questions.create(&user.id, title.to_string()).await;
-
-    let items = state.questions.list_for_user(&user.id).await;
-    let html = Questions { user }
+    let html = JoyForm { user }
         .render()
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -71,8 +85,10 @@ pub async fn create(
 }
 
 pub fn router() -> Router<AppState> {
-    Router::new().nest(
-        "/questions",
-        Router::new().route("/", get(show).post(create)),
-    )
+    Router::new()
+        .nest(
+            "/joy-form",
+            Router::new().route("/", get(show)).route("/", post(create)),
+        )
+        .route("/api/joys", post(create))
 }

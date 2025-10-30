@@ -6,7 +6,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 function components() {
   const components = {};
-  for (const component of ['app', 'questions']) {
+  for (const component of ['app', 'joy_form']) {
     components[`css/component/${component}`] = path.resolve(__dirname, 'src', 'component', component, `${component}.scss`);
   }
   return components;

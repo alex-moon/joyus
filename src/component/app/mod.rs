@@ -5,7 +5,7 @@ use axum::routing::get;
 use axum::http::StatusCode;
 use axum::Router;
 
-use crate::component::{Renderable, questions::Questions};
+use crate::component::{Renderable, joy_form::JoyForm};
 use crate::service::{
     state::AppState,
 };
@@ -13,16 +13,16 @@ use crate::service::{
 #[derive(Template)]
 #[template(path = "component/app/app.html")]
 pub struct App {
-    questions: String,
+    joy_form: String,
 }
 
-/// GET /app — compose the app by rendering the Questions page and embedding it
+/// GET /app — compose the app by rendering the Joy Form page and embedding it
 pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
-    let Html(questions) = Questions::render_with_state(&state)
+    let Html(joy_form) = JoyForm::render_with_state(&state)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
-    let app = App { questions };
+    let app = App { joy_form };
     let html = app.render().map_err(crate::service::internal_error)?;
     Ok(Html(html))
 }

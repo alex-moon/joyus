@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use super::{questions::QuestionsService, sse::SseService, user::UserService};
+use super::{joy::JoyService, sse::SseService, user::UserService};
 
 #[derive(Clone)]
 pub struct AppState {
     pub users: Arc<UserService>,
-    pub questions: Arc<QuestionsService>,
+    pub joys: Arc<JoyService>,
     pub sse: Arc<SseService>,
 }

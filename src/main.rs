@@ -20,7 +20,7 @@ use service::{
     event::EventBus,
     sse::{events as sse_events, SseService},
     state::AppState,
-    questions::QuestionsService,
+    joy::JoyService,
     user::UserService,
 };
 
@@ -53,12 +53,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let _event_bus = Arc::new(EventBus::new(100));
     let sse = Arc::new(SseService::new(100));
     let users = Arc::new(UserService::new());
-    let questions = Arc::new(QuestionsService::new());
+    let joys = Arc::new(JoyService::new());
 
     // App state
     let app_state = AppState {
         users: users.clone(),
-        questions: questions.clone(),
+        joys: joys.clone(),
         sse: sse.clone(),
     };
 
@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let base: Router<AppState> = Router::new()
         .route("/", get(index))
         .merge(component::app::router())
-        .merge(component::questions::router())
+        .merge(component::joy_form::router())
         .route("/favicon.ico", get_service(ServeFile::new("public/assets/favicon.ico")));
 
     let events_router: Router<AppState> = Router::new().route("/events", get(sse_events));
