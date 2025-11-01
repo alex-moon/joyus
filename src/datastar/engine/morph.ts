@@ -307,11 +307,11 @@ const morphNode = (
     }
 
     // @todo here is the key bit - tbh we should probably just replace all the non-component logic >:(
-    const tpl = newElt.querySelector('template[shadowrootmode]');
-    if (tpl) {
-      const replacement = newElt.cloneNode(true) as Element;
-      oldElt.replaceWith(replacement);
-      return replacement;
+    const template = newElt.querySelector('template[shadowrootmode]');
+    if (template) {
+      const replacement = (template as any).content.cloneNode(true);
+      oldElt.shadowRoot.replaceChildren(...replacement.children);
+      return oldNode;
     }
 
     //  many bothans died to bring us this information:
