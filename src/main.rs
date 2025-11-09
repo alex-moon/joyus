@@ -1,3 +1,4 @@
+use sqlx::postgres::PgPoolOptions;
 use {
     axum::{
         extract::State,
@@ -49,11 +50,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let static_service = get_service(ServeDir::new("public").append_index_html_on_directories(true));
 
+    dotenvy::dotenv().ok();
+
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&std::env::var("DATABASE_URL")?)
+        .await?;
+    sqlx::migrate!().run(&pool).await?;
+
     // Initialize services
     let _event_bus = Arc::new(EventBus::new(100));
     let sse = Arc::new(SseService::new(100));
-    let users = Arc::new(UserService::new());
-    let joys = Arc::new(JoyService::new());
+    let users = Arc::new(UserService::new(pool.clone()));
+    let joys = Arc::new(JoyService::new(pool.clone()));
 
     // App state
     let app_state = AppState {
@@ -67,6 +76,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .route("/", get(index))
         .merge(component::app::router())
         .merge(component::joy_form::router())
+        .merge(component::joy_cards::router())
         .route("/favicon.ico", get_service(ServeFile::new("public/assets/favicon.ico")));
 
     let events_router: Router<AppState> = Router::new().route("/events", get(sse_events));

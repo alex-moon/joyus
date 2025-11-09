@@ -2,10 +2,6 @@
 
 :host {
   display: block;
-  background: $panel;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  border: 2px solid $border;
 
   section.start-screen {
     display: flex;
@@ -47,7 +43,7 @@
   div.progress-container {
     width: 100%;
     max-width: 48rem;
-    margin-bottom: 2rem;
+    margin-bottom: 4px;
   }
 
   div.progress-bar {

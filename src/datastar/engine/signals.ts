@@ -728,8 +728,10 @@ const mergeInner = (
         )
       }
     }
-  } else if (!(ifMissing && hasOwn(targetParent, target))) {
-    targetParent[target] = patch
+  } else {
+    if (!ifMissing || !hasOwn(targetParent, target)) {
+      targetParent[target] = patch
+    }
   }
 }
 
@@ -769,17 +771,15 @@ export const filtered = (
 export const root: Store = deep({})
 
 /** Creates a signals root for a given custom element. */
-export const createStore = (host?: Element): Store => {
+export const createStore = (host: Element): Store => {
   const store = deep({}) as Store
   Object.defineProperty(store, '__ds', { value: true })
-  if (host) {
-    Object.defineProperty(store, '__host', {
-      value: host,
-      writable: false,
-      enumerable: false,
-      configurable: false
-    })
-  }
+  Object.defineProperty(store, '__host', {
+    value: host,
+    writable: false,
+    enumerable: false,
+    configurable: false
+  })
   return store
 }
 
@@ -789,10 +789,12 @@ export const createStore = (host?: Element): Store => {
  * Otherwise returns document.documentElement.
  */
 export const getHostFor = (el: Element): Element => {
+  if (el.shadowRoot) {
+    return el;
+  }
   const rootNode = el.getRootNode() as Document | ShadowRoot
   const host = (rootNode as ShadowRoot).host
-  const result = host ?? document.documentElement
-  return result
+  return host ?? document.documentElement
 }
 
 /**
