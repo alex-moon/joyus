@@ -19,8 +19,10 @@ impl SseService {
         Self { html_tx }
     }
 
-    #[allow(dead_code)]
     pub fn publish_html(&self, html: String) -> Result<usize, broadcast::error::SendError<String>> {
+        if self.html_tx.receiver_count() == 0 {
+            return Ok(0);
+        }
         self.html_tx.send(html)
     }
 
@@ -35,7 +37,14 @@ pub async fn events(
     let rx = state.sse.subscriber();
     let stream = BroadcastStream::new(rx).filter_map(|msg| async move {
         match msg {
-            Ok(html) => Some(Ok(Event::default().event("component-swap").data(html))),
+            Ok(html) => {
+                let cleaned = html.replace(['\n', '\r'], "");
+                let data = format!("elements {}", cleaned);
+                Some(Ok(Event::default()
+                    .event("datastar-patch-elements")
+                    .data(data)
+                ))
+            },
             Err(BroadcastStreamRecvError::Lagged(_)) => None,
         }
     });

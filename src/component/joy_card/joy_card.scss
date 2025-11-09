@@ -1,0 +1,23 @@
+@use "/src/scss/config" as *;
+
+:host {
+  display: block;
+}
+
+.joy-card {
+  border: 2px solid $border;
+  border-radius: 8px;
+  padding: 12px;
+  background: $panel;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .joy-text {
+    color: $text;
+  }
+  .joy-created {
+    font-size: smaller;
+    color: $muted;
+  }
+}

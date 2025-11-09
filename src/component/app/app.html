@@ -1,8 +1,9 @@
-<app-app>
+<app-app data-init="@get('/events')" id="app">
     <template shadowrootmode="open">
         <link rel="stylesheet" href="/assets/css/component/app.css"/>
         <div class="app">
             {{ joy_form|safe }}
+            {{ joy_cards|safe }}
         </div>
     </template>
 </app-app>

@@ -6,7 +6,8 @@ use axum::response::Html;
 use axum::routing::{get, post};
 use axum::Router;
 use serde::Deserialize;
-
+use crate::component::joy_card::JoyCard;
+use crate::component::joy_cards::JoyCards;
 use crate::component::Renderable;
 use crate::service::state::AppState;
 use crate::service::joy::Point;
@@ -74,15 +75,19 @@ pub async fn create(
         return Err((StatusCode::BAD_REQUEST, err));
     }
 
-    let html = JoyForm { user }
+    let form = JoyForm { user }
         .render()
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // if let Err(e) = state.sse.publish_html(html.clone()) {
-    //     tracing::warn!(?e, "failed to publish SSE html");
-    // }
+    let Html(cards) = JoyCards::render_with_state(&state)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
-    Ok(Html(html))
+    if let Err(e) = state.sse.publish_html(cards) {
+        tracing::warn!(?e, "failed to publish SSE html");
+    }
+
+    Ok(Html(form))
 }
 
 pub fn router() -> Router<AppState> {

@@ -4,6 +4,11 @@ export type Store = Record<string, any>
 export type JSONPatch = Store & { length?: never }
 export type Paths = [string, any][]
 
+export type DatastarElementPatchEvent = {
+    id: string
+    element: Element
+}
+
 export type DatastarFetchEvent = {
   type: string
   el: HTMLOrSVG

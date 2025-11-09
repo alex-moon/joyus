@@ -2,15 +2,11 @@
 // Slug: Attaches an event listener to an element.
 // Description: Attaches an event listener to an element, executing an expression whenever the event is triggered.
 
-import { attribute } from '@engine'
-import {
-  DATASTAR_FETCH_EVENT,
-  DATASTAR_SIGNAL_PATCH_EVENT,
-} from '@engine/consts'
-import { beginBatch, endBatch } from '@engine/signals'
-import { modifyCasing } from '@utils/text'
-import { modifyTiming } from '@utils/timing'
-import { modifyViewTransition } from '@utils/view-transitions'
+import {attribute} from '@engine'
+import {beginBatch, endBatch} from '@engine/signals'
+import {modifyCasing} from '@utils/text'
+import {modifyTiming} from '@utils/timing'
+import {modifyViewTransition} from '@utils/view-transitions'
 
 attribute({
   name: 'on',
