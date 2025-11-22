@@ -11,7 +11,7 @@ const STEPS: string[] = [
 
 export class JoyForm extends Component {
     protected signals = {
-        MAX_LENGTH: 100,
+        MAX_LENGTH: 1,
         currentStep: 0,
         frustration: '',
         context: '',

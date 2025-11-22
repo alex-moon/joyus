@@ -8,7 +8,7 @@ use uuid::Uuid;
 #[derive(Template)]
 #[template(path = "component/joy_card/joy_card.html")]
 pub struct JoyCard {
-    joy: Joy,
+    pub joy: Joy,
 }
 
 impl JoyCard {

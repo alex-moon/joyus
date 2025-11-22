@@ -1,4 +1,4 @@
-<app-joy-card data-signals="{created: {{ joy.created|json }}, joy: {{ joy.joy|json }}}">
+<app-joy-card id="joy-card-{{ joy.id }}" data-signals="{created: {{ joy.created|json }}, joy: {{ joy.joy|json }}}">
     <template shadowrootmode="open">
         <link rel="stylesheet" href="/assets/css/component/joy_card.css"/>
         <div class="joy-card">

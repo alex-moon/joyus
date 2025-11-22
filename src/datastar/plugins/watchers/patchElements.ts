@@ -3,9 +3,10 @@
 // Description: Patches elements into the DOM.
 
 import { watcher } from '@engine'
-import type { WatcherContext } from '@engine/types'
+import type {DatastarElementPatchEvent, WatcherContext} from '@engine/types'
 import { supportsViewTransitions } from '@utils/view-transitions'
 import {getHostFor} from "@engine/signals";
+import {DATASTAR_ELEMENT_PATCH_EVENT} from "@engine/consts";
 
 type PatchElementsArgs = {
   elements: string
@@ -43,48 +44,23 @@ const onPatchElements = (
   const newContent = newDocument.querySelector('template')!.content
 
   for (const child of newContent.children) {
-    const target = getHostFor(el)!
-    if (!target) {
+    if (!child.id) {
       console.warn(error('PatchElementsNoTargetsFound'), {
         element: { id: child.id },
       })
       continue
     }
 
-    applyToTargets(child, [target])
-  }
-}
-
-const scripts = new WeakSet<HTMLScriptElement>()
-for (const script of document.querySelectorAll('script')) {
-  scripts.add(script)
-}
-
-const execute = (target: Element): void => {
-  const elScripts =
-    target instanceof HTMLScriptElement
-      ? [target]
-      : target.querySelectorAll('script')
-  for (const old of elScripts) {
-    if (!scripts.has(old)) {
-      const script = document.createElement('script')
-      for (const { name, value } of old.attributes) {
-        script.setAttribute(name, value)
-      }
-      script.text = old.text
-      old.replaceWith(script)
-      scripts.add(script)
-    }
-  }
-}
-
-const applyToTargets = (
-  element: DocumentFragment | Element,
-  targets: Iterable<Element>,
-) => {
-  for (const target of targets) {
-    const cloned = element.cloneNode(true) as Element
-    execute(cloned)
-    target.replaceWith(cloned)
+    document.dispatchEvent(
+        new CustomEvent<DatastarElementPatchEvent>(DATASTAR_ELEMENT_PATCH_EVENT, {
+            detail: {
+              id: child.id,
+              element: child,
+            },
+            // @todo do we need these??
+            bubbles: true,
+            composed: true,
+        }),
+    )
   }
 }
