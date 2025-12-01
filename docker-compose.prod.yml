@@ -8,12 +8,13 @@ services:
     image: joyus:prod
     container_name: joyus_prod
     ports:
-      - "12345:12345"
+      - "10085:12345"
     environment:
-      - DATABASE_URL=postgres://joyus:joyus@db:5432/joyus
       - RUST_LOG=info
+      - DATABASE_URL=postgres://joyus:TW9uICAxIERlYyAx@db:5432/joyus
     depends_on:
       - db
+    restart: always
 
   db:
     image: postgis/postgis:16-3.4
@@ -21,11 +22,11 @@ services:
     environment:
       - POSTGRES_DB=joyus
       - POSTGRES_USER=joyus
-      - POSTGRES_PASSWORD=joyus
-    ports:
-      - "5432:5432"
+      - POSTGRES_PASSWORD=TW9uICAxIERlYyAx
+
     volumes:
       - pgdata_prod:/var/lib/postgresql/data
+    restart: unless-stopped
 
 volumes:
   pgdata_prod:

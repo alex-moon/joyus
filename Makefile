@@ -17,3 +17,6 @@ sh:
 db:
 	docker-compose -f docker-compose.local.yml run --rm \
 	-e PGPASSWORD=joyus app psql --user joyus --host db joyus
+
+deploy:
+	./deploy.sh
