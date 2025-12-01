@@ -1,10 +1,26 @@
-use sqlx::PgPool;
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::Json;
+use axum::response::Html;
+use serde::Deserialize;
+use sqlx::{PgPool, Row};
+use tower_sessions::Session;
 use uuid::Uuid;
+use crate::service::state::AppState;
+
+const APP_USER_ID_KEY: &str = "app_user_id";
+
+#[derive(Deserialize)]
+pub struct Location {
+    pub longitude: Option<f64>,
+    pub latitude: Option<f64>,
+}
 
 #[derive(Clone, Debug)]
-pub struct UserSummary {
+pub struct User {
     pub id: Uuid,
-    pub name: String,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
 }
 
 #[derive(Clone)]
@@ -17,43 +33,110 @@ impl UserService {
         Self { pool }
     }
 
-    /// Ensures there is exactly one user in the DB and returns it.
-    pub async fn ensure_single_user(&self) -> Result<UserSummary, String> {
-        // Check if a user already exists
-        let existing = sqlx::query!(
-            r#"SELECT id, name FROM users LIMIT 1"#
-        )
-            .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| e.to_string())?;
+    // This method handles the session-to-DB mapping completely.
+    pub async fn get_or_create_session_user(&self, session: Session) -> Result<User, String> {
+        // 1. Try to load the application's User ID from the session store
+        let user_id_option: Option<Uuid> = session.get(APP_USER_ID_KEY).await
+            .map_err(|e| format!("Session read error: {}", e))?;
 
-        if let Some(row) = existing {
-            return Ok(UserSummary {
-                id: row.id,
-                name: row.name,
-            });
-        }
+        let final_user = if let Some(id) = user_id_option {
+            // A. User ID found: Load user from the database.
+            self.get_by_id(&id).await?
+        } else {
+            // B. New Session: Create a new anonymous user.
+            let new_user = self.create_anonymous_user().await?;
 
-        // Otherwise, insert the one and only user
-        let id = Uuid::new_v4();
-        let name = "Guest".to_string();
+            // C. Store the new user's ID in the tower-session object.
+            // This implicitly triggers the session middleware to generate a Session ID
+            // and send the Set-Cookie header in the response.
+            session.insert(APP_USER_ID_KEY, new_user.id).await
+                .map_err(|e| format!("Session write error: {}", e))?;
 
-        sqlx::query!(
-            r#"INSERT INTO users (id, name) VALUES ($1, $2)"#,
-            id,
-            name
-        )
-            .execute(&self.pool)
-            .await
-            .map_err(|e| e.to_string())?;
+            new_user
+        };
 
-        Ok(UserSummary { id, name })
+        Ok(final_user)
     }
 
-    /// Public accessor — always returns the single user
-    pub async fn summary(&self) -> UserSummary {
-        self.ensure_single_user()
-            .await
-            .expect("failed to ensure default user")
+    pub async fn create_anonymous_user(&self) -> Result<User, String> {
+        let row = sqlx::query(r#"
+            INSERT INTO users DEFAULT VALUES
+            RETURNING id
+        "#)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        Ok(User {
+            id: row.get::<Uuid, _>("id"),
+            latitude: None,
+            longitude: None,
+        })
     }
+
+    pub async fn update_location(&self, id: &Uuid, longitude: f64, latitude: f64) -> Result<(), String> {
+        sqlx::query(
+            r#"UPDATE users SET point = ST_MakePoint($2, $3) WHERE id = $1"#
+        )
+        .bind(id)
+        .bind(longitude)
+        .bind(latitude)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
+    pub async fn get_by_id(&self, id: &Uuid) -> Result<User, String> {
+        let result = sqlx::query_as!(
+            User,
+            r#"
+                SELECT
+                    id,
+                    ST_X(point::geometry) AS longitude,
+                    ST_Y(point::geometry) AS latitude
+                FROM users WHERE id = $1
+            "#,
+            id
+        )
+        .fetch_optional(&self.pool) // 2. Use fetch_optional to get 0 or 1 row.
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "User not found".to_string())?;
+        Ok(result)
+    }
+}
+
+pub async fn update_user(
+    State(state): State<AppState>,
+    session: Session,
+    Json(form): Json<Location>,
+) -> Result<StatusCode, StatusCode> {
+    let user = state.users.get_or_create_session_user(session).await
+        .map_err(|e| {
+            tracing::error!("Failed to get or create session user: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    if let (Some(lon), Some(lat)) = (form.longitude, form.latitude) {
+        state.users.update_location(&user.id, lat, lon).await
+            .map_err(|e| {
+                tracing::error!("Failed to update user location: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+    }
+
+    let Html(cards) = crate::component::joy_cards::render_for_user(&state, user.id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to render joy cards: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    if let Err(e) = state.sse.publish_html(cards) {
+        tracing::warn!(?e, "failed to publish SSE html");
+    }
+
+    Ok(StatusCode::NO_CONTENT)
 }
