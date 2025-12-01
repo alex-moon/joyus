@@ -5,7 +5,8 @@
   "scripts": {
     "dev:web": "webpack --mode=development --watch",
     "dev:rust": "cargo watch -w src -w public/index.html -w public/assets -x run",
-    "dev": "concurrently -k -n WEB,RUST -c auto \"npm:dev:web\" \"npm:dev:rust\""
+    "dev": "concurrently -k -n WEB,RUST -c auto \"npm:dev:web\" \"npm:dev:rust\"",
+    "build": "webpack --mode=production"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",
