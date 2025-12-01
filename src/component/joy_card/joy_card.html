@@ -1,9 +1,19 @@
-<app-joy-card id="joy-card-{{ joy.id }}" data-signals="{created: {{ joy.created|json }}, joy: {{ joy.joy|json }}}">
+<app-joy-card
+    id="joy-card-{{ joy.id }}"
+    data-signals="{
+        created: {{ created|json }},
+        distance: {{ joy.distance|json }},
+        joy: {{ joy.joy|json }}
+    }"
+>
     <template shadowrootmode="open">
         <link rel="stylesheet" href="/assets/css/component/joy_card.css"/>
         <div class="joy-card">
             <div class="joy-text">{{ joy.joy }}</div>
-            <div class="joy-created" data-text="$createdFormatted">{{ joy.created }}</div>
+            <div class="joy-summary">
+                <div class="joy-created" data-text="$createdFormatted">{{ joy.created|json }}</div>
+                <div class="joy-distance" data-text="$distanceFormatted">{{ joy.distance|json }}</div>
+            </div>
         </div>
     </template>
 </app-joy-card>

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = { version = "0.8.4" }
+axum = { version = "0.7" }
 askama = { version = "0.12", features = ["with-axum", "serde-json"] }
 askama_axum = "0.4"
 serde = { version = "1", default-features = false, features = ["derive"] }
@@ -17,5 +17,8 @@ futures-core = "0.3"
 futures-util = "0.3"
 tokio-stream = { version = "0.1", features = ["sync"] }
 async-trait = "0.1"
-sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "uuid", "time", "runtime-tokio-native-tls"] }
+sqlx = { version = "^0.8", default-features = false, features = ["runtime-tokio", "postgres", "uuid", "time"] }
 dotenvy = "0.15.7"
+tower-sessions = "0.13"
+tower-sessions-sqlx-store = { version = "0.14", features = ["postgres"] }
+time = { version = "0.3.44", features = ["serde"] }

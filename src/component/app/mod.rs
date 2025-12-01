@@ -4,8 +4,8 @@ use axum::response::Html;
 use axum::routing::get;
 use axum::http::StatusCode;
 use axum::Router;
+use tower_sessions::Session;
 
-use crate::component::{Renderable, joy_form::JoyForm, joy_cards::JoyCards};
 use crate::service::{
     state::AppState,
 };
@@ -17,12 +17,18 @@ pub struct App {
     joy_cards: String,
 }
 
-pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
-    let Html(joy_form) = JoyForm::render_with_state(&state)
+pub async fn show(State(state): State<AppState>, session: Session) -> Result<Html<String>, (StatusCode, String)> {
+    let user = state
+        .users
+        .get_or_create_session_user(session.clone())
+        .await
+        .map_err(crate::service::internal_error)?;
+
+    let Html(joy_form) = crate::component::joy_form::render_for_session(&state, session)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
-    let Html(joy_cards) = JoyCards::render_with_state(&state)
+    let Html(joy_cards) = crate::component::joy_cards::render_for_user(&state, user.id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 

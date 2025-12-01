@@ -6,34 +6,27 @@ use axum::response::Html;
 use axum::routing::{get, post};
 use axum::Router;
 use serde::Deserialize;
-use crate::component::joy_card::JoyCard;
-use crate::component::joy_cards::JoyCards;
-use crate::component::Renderable;
 use crate::service::state::AppState;
-use crate::service::joy::Point;
+use tower_sessions::Session;
 
-/// Full Joy Json page template
 #[derive(Template)]
 #[template(path = "component/joy_form/joy_form.html")]
 pub struct JoyForm {
-    pub user: UserSummary,
+    pub user: User,
 }
 
-use crate::service::user::UserSummary;
+use crate::service::user::User;
 
-#[async_trait::async_trait]
-impl Renderable for JoyForm {
-    async fn render_with_state(state: &AppState) -> Result<Html<String>, String> {
-        let user = state.users.summary().await;
-        let html = JoyForm { user }
-            .render()
-            .map_err(|e| e.to_string())?;
-        Ok(Html(html))
-    }
+pub async fn render_for_session(state: &AppState, session: Session) -> Result<Html<String>, String> {
+    let user = state.users.get_or_create_session_user(session).await?;
+    let html = JoyForm { user }
+        .render()
+        .map_err(|e| e.to_string())?;
+    Ok(Html(html))
 }
 
-pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
-    let user = state.users.summary().await;
+pub async fn show(State(state): State<AppState>, session: Session) -> Result<Html<String>, (StatusCode, String)> {
+    let user = state.users.get_or_create_session_user(session).await.map_err(crate::service::internal_error)?;
 
     let tpl = JoyForm { user };
     let html = tpl.render().map_err(crate::service::internal_error)?;
@@ -41,30 +34,36 @@ pub async fn show(State(state): State<AppState>) -> Result<Html<String>, (Status
 }
 
 #[derive(Deserialize)]
-struct NewJoy {
+pub struct NewJoy {
     frustration: String,
     context: String,
     joy: String,
-    lon: Option<f64>,
-    lat: Option<f64>,
+    longitude: Option<f64>,
+    latitude: Option<f64>,
 }
 
 pub async fn create(
     State(state): State<AppState>,
+    session: Session,
     Json(form): Json<NewJoy>,
 ) -> Result<Html<String>, (StatusCode, String)> {
-    let user = state.users.summary().await;
+    let user = state
+        .users
+        .get_or_create_session_user(session)
+        .await
+        .map_err(crate::service::internal_error)?;
 
-    let point = match (form.lon, form.lat) {
-        (Some(lon), Some(lat)) => Some(Point::new(lon, lat).map_err(|e| (StatusCode::BAD_REQUEST, e))?),
-        _ => None,
-    };
+    if let (Some(lon), Some(lat)) = (form.longitude, form.latitude) {
+        // persist the last known location for this user
+        if let Err(e) = state.users.update_location(&user.id, lat, lon).await {
+            tracing::warn!(error = %e, "failed to update user location");
+        }
+    }
 
     let res = state
         .joys
         .create(
             &user.id,
-            point,
             form.frustration.clone(),
             form.context.clone(),
             form.joy.clone(),
@@ -75,11 +74,11 @@ pub async fn create(
         return Err((StatusCode::BAD_REQUEST, err));
     }
 
-    let form = JoyForm { user }
+    let form = JoyForm { user: user.clone() }
         .render()
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let Html(cards) = JoyCards::render_with_state(&state)
+    let Html(cards) = crate::component::joy_cards::render_for_user(&state, user.id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 

@@ -1,3 +1,4 @@
+use axum::routing::post;
 use sqlx::postgres::PgPoolOptions;
 use {
     axum::{
@@ -13,6 +14,8 @@ use {
     tower_http::services::{ServeDir, ServeFile},
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };
+use tower_sessions::{Session, SessionManagerLayer};
+use tower_sessions_sqlx_store::PostgresStore;
 
 mod component;
 mod service;
@@ -24,6 +27,7 @@ use service::{
     joy::JoyService,
     user::UserService,
 };
+use crate::service::user::update_user;
 
 #[derive(Template)]
 #[template(path = "../public/index.html")]
@@ -31,8 +35,8 @@ struct Index {
     app: String,
 }
 
-async fn index(State(state): State<AppState>) -> Result<Html<String>, (StatusCode, String)> {
-    let Html(app) = component::app::show(State(state)).await?;
+async fn index(State(state): State<AppState>, session: Session) -> Result<Html<String>, (StatusCode, String)> {
+    let Html(app) = component::app::show(State(state), session).await?;
     let html = Index { app }.render().map_err(service::internal_error)?;
     Ok(Html(html))
 }
@@ -48,8 +52,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let static_service = get_service(ServeDir::new("public").append_index_html_on_directories(true));
-
     dotenvy::dotenv().ok();
 
     let pool = PgPoolOptions::new()
@@ -57,6 +59,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .connect(&std::env::var("DATABASE_URL")?)
         .await?;
     sqlx::migrate!().run(&pool).await?;
+
+    let session_store = PostgresStore::new(pool.clone());
+    match session_store.migrate().await {
+        Ok(_) => tracing::info!("tower-sessions migration successful."),
+        Err(e) => {
+            tracing::error!("tower-sessions migration failed with error: {:?}", e);
+            // This will panic and print the full error detail to stdout
+            panic!("Fatal Session Migration Error: {:?}", e);
+        }
+    }
+    let session_layer = SessionManagerLayer::new(session_store).with_secure(false);
 
     // Initialize services
     let _event_bus = Arc::new(EventBus::new(100));
@@ -79,12 +92,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .merge(component::joy_cards::router())
         .route("/favicon.ico", get_service(ServeFile::new("public/assets/favicon.ico")));
 
-    let events_router: Router<AppState> = Router::new().route("/events", get(sse_events));
+    let events_router: Router<AppState> = Router::new()
+        .route("/events", get(sse_events));
+
+    let user_router: Router<AppState> = Router::new()
+        .route("/user", post(update_user));
 
     let routes = base
         .merge(events_router)
-        .fallback_service(static_service)
-        .with_state(app_state);
+        .merge(user_router)
+        .layer(session_layer)
+        .with_state(app_state)
+        .fallback_service(
+            ServeDir::new("public").append_index_html_on_directories(true),
+        );
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:12345")
         .await

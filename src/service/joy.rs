@@ -1,34 +1,20 @@
 use sqlx::{PgPool, Row};
+use time::OffsetDateTime;
 use uuid::Uuid;
-use std::time::{SystemTime, UNIX_EPOCH};
+use serde::Serialize;
 
-#[derive(Clone, Debug)]
-pub struct Point {
-    pub lon: f64,
-    pub lat: f64,
-}
-
-impl Point {
-    pub fn new(lon: f64, lat: f64) -> Result<Self, String> {
-        if !(-180.0..=180.0).contains(&lon) {
-            return Err("longitude must be between -180 and 180".into());
-        }
-        if !(-90.0..=90.0).contains(&lat) {
-            return Err("latitude must be between -90 and 90".into());
-        }
-        Ok(Self { lon, lat })
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Joy {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub point: Option<Point>,
-    pub frustration: String,
-    pub context: String,
+    pub longitude: Option<f64>,
+    pub latitude: Option<f64>,
+    pub frustration: Option<String>,
+    pub context: Option<String>,
     pub joy: String,
-    pub created: i64, // unix millis
+    #[serde(with = "time::serde::iso8601")]
+    pub created: OffsetDateTime,
+    pub distance: Option<f64>,
 }
 
 #[derive(Clone)]
@@ -56,38 +42,76 @@ impl JoyService {
     }
 
     pub async fn list_for_user(&self, user_id: &Uuid) -> Result<Vec<Joy>, String> {
-        let rows = sqlx::query(
-            r#"
-                SELECT id, user_id,
-                       ST_X(point::geometry) AS lon,
-                       ST_Y(point::geometry) AS lat,
-                       frustration, context, joy, created
-                FROM joys
-                WHERE user_id = $1
-                ORDER BY created DESC
-            "#,
-        )
+        let row = sqlx::query(r#"
+            SELECT point IS NOT NULL AS has_point
+            FROM users WHERE id = $1
+        "#)
             .bind(user_id)
-            .fetch_all(&self.db)
+            .fetch_one(&self.db)
             .await
             .map_err(|e| e.to_string())?;
+
+        let has_point = row.get::<bool, _>("has_point");
+
+        let rows = if has_point {
+            sqlx::query(
+                r#"
+                    SELECT
+                        j.id,
+                        j.user_id,
+                        j.created,
+                        ST_X(j.point::geometry) AS longitude,
+                        ST_Y(j.point::geometry) AS latitude,
+                        j.joy,
+                        ST_DISTANCE(j.point, u.point) AS distance
+                    FROM joys j
+                    JOIN users u ON u.id = $1
+                    WHERE u.point IS NOT NULL
+                        AND j.point IS NOT NULL
+                        AND ST_DWithin(j.point, u.point, 1000)
+                    ORDER BY ST_Distance(j.point, u.point) ASC
+                "#,
+            )
+                .bind(user_id)
+                .fetch_all(&self.db)
+                .await
+                .map_err(|e| e.to_string())?
+        } else {
+            sqlx::query(
+                r#"
+                    SELECT
+                        j.id,
+                        j.user_id,
+                        j.created,
+                        ST_X(j.point::geometry) AS longitude,
+                        ST_Y(j.point::geometry) AS latitude,
+                        j.joy,
+                        NULL AS distance
+                    FROM joys j
+                    JOIN users u ON u.id = $1
+                    WHERE u.point IS NULL
+                        AND j.created >= NOW() - INTERVAL '1 hour'
+                    ORDER BY j.created DESC
+                "#,
+            )
+                .bind(user_id)
+                .fetch_all(&self.db)
+                .await
+                .map_err(|e| e.to_string())?
+        };
 
         let joys = rows
             .into_iter()
             .map(|row| Joy {
                 id: row.get::<Uuid, _>("id"),
                 user_id: row.get::<Uuid, _>("user_id"),
-                point: match (
-                    row.try_get::<f64, _>("lon"),
-                    row.try_get::<f64, _>("lat"),
-                ) {
-                    (Ok(lon), Ok(lat)) => Some(Point { lon, lat }),
-                    _ => None,
-                },
-                frustration: row.get::<String, _>("frustration"),
-                context: row.get::<String, _>("context"),
+                created: row.get::<OffsetDateTime, _>("created"),
+                longitude: row.get::<Option<f64>, _>("longitude"),
+                latitude: row.get::<Option<f64>, _>("latitude"),
+                frustration: None,
+                context: None,
                 joy: row.get::<String, _>("joy"),
-                created: row.get::<i64, _>("created"),
+                distance: row.get::<Option<f64>, _>("distance"),
             })
             .collect();
 
@@ -97,67 +121,61 @@ impl JoyService {
     pub async fn create(
         &self,
         user_id: &Uuid,
-        point: Option<Point>,
         frustration: String,
         context: String,
         joy: String,
     ) -> Result<Joy, String> {
         self.validate(&frustration, &context, &joy)?;
 
-        let created = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as i64;
-
-        let id = Uuid::new_v4();
-
-        sqlx::query(
-            r#"
-            INSERT INTO joys (id, user_id, point, frustration, context, joy, created)
-            VALUES ($1, $2,
-                CASE WHEN $3 IS NULL THEN NULL
-                     ELSE ST_SetSRID(ST_MakePoint($4, $5), 4326)::GEOGRAPHY
-                END,
-                $6, $7, $8, $9
-            )
-            "#,
-        )
-            .bind(id)
-            .bind(user_id)
-            .bind(point.is_some())
-            .bind(point.as_ref().map(|p| p.lon))
-            .bind(point.as_ref().map(|p| p.lat))
+        let row = sqlx::query(r#"
+            INSERT INTO joys (user_id, point, frustration, context, joy, created)
+            SELECT id, point, $1, $2, $3, NOW()
+            FROM users WHERE id = $4
+            RETURNING id, user_id, frustration, context, joy, created,
+              ST_X(point::geometry) AS longitude,
+              ST_Y(point::geometry) AS latitude
+        "#)
             .bind(frustration.trim())
             .bind(context.trim())
             .bind(joy.trim())
-            .bind(created)
-            .execute(&self.db)
+            .bind(user_id)
+            .fetch_one(&self.db)
             .await
             .map_err(|e| e.to_string())?;
 
         Ok(Joy {
-            id,
-            user_id: *user_id,
-            point,
-            frustration: frustration.trim().to_string(),
-            context: context.trim().to_string(),
-            joy: joy.trim().to_string(),
-            created,
+            id: row.get::<Uuid, _>("id"),
+            user_id: row.get::<Uuid, _>("user_id"),
+            created: row.get::<OffsetDateTime, _>("created"),
+            longitude: row.get::<Option<f64>, _>("longitude"),
+            latitude: row.get::<Option<f64>, _>("latitude"),
+            frustration: row.get::<Option<String>, _>("frustration"),
+            context: row.get::<Option<String>, _>("context"),
+            joy: row.get::<String, _>("joy"),
+            distance: Some(0f64),
         })
     }
 
-    pub async fn get(&self, id: Uuid) -> Result<Option<Joy>, String> {
+    pub async fn get_for_user(&self, id: Uuid, user_id: Uuid) -> Result<Option<Joy>, String> {
         let row = sqlx::query(
             r#"
-                SELECT id, user_id,
-                       ST_X(point::geometry) AS lon,
-                       ST_Y(point::geometry) AS lat,
-                       frustration, context, joy, created
+                SELECT
+                    id,
+                    user_id,
+                    created,
+                    ST_X(point::geometry) AS longitude,
+                    ST_Y(point::geometry) AS latitude,
+                    joy,
+                    ST_Distance(
+                        point,
+                        (SELECT point FROM users WHERE id = $2)
+                    ) AS distance
                 FROM joys
                 WHERE id = $1
             "#,
         )
             .bind(id)
+            .bind(user_id)
             .fetch_optional(&self.db)
             .await
             .map_err(|e| e.to_string())?;
@@ -165,17 +183,13 @@ impl JoyService {
         Ok(row.map(|row| Joy {
             id: row.get::<Uuid, _>("id"),
             user_id: row.get::<Uuid, _>("user_id"),
-            point: match (
-                row.try_get::<f64, _>("lon"),
-                row.try_get::<f64, _>("lat"),
-            ) {
-                (Ok(lon), Ok(lat)) => Some(Point { lon, lat }),
-                _ => None,
-            },
-            frustration: row.get::<String, _>("frustration"),
-            context: row.get::<String, _>("context"),
+            longitude: row.get::<Option<f64>, _>("longitude"),
+            latitude: row.get::<Option<f64>, _>("latitude"),
+            frustration: None,
+            context: None,
             joy: row.get::<String, _>("joy"),
-            created: row.get::<i64, _>("created"),
+            created: row.get::<OffsetDateTime, _>("created"),
+            distance: row.get::<Option<f64>, _>("distance"),
         }))
     }
 }
