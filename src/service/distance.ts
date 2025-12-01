@@ -6,7 +6,7 @@ export class DistanceHelper {
             if (miles > 1000) {
                 return `${(miles / 1000).toFixed(1)}k miles`;
             }
-            return `${miles.toFixed(0)} miles`;
+            return `${miles.toFixed(1)} miles`;
         }
         if (value > 1000) {
             return '1 mile';

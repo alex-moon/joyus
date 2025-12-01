@@ -68,7 +68,7 @@ impl JoyService {
                     JOIN users u ON u.id = $1
                     WHERE u.point IS NOT NULL
                         AND j.point IS NOT NULL
-                        AND ST_DWithin(j.point, u.point, 1000)
+                        AND ST_DWithin(j.point, u.point, 1000000)
                     ORDER BY ST_Distance(j.point, u.point) ASC
                 "#,
             )
@@ -90,7 +90,7 @@ impl JoyService {
                     FROM joys j
                     JOIN users u ON u.id = $1
                     WHERE u.point IS NULL
-                        AND j.created >= NOW() - INTERVAL '1 hour'
+                        AND j.created >= (NOW() - INTERVAL '24 hour')
                     ORDER BY j.created DESC
                 "#,
             )

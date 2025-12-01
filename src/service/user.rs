@@ -1,6 +1,7 @@
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
+use axum::response::Html;
 use serde::Deserialize;
 use sqlx::{PgPool, Row};
 use tower_sessions::Session;
@@ -74,7 +75,6 @@ impl UserService {
     }
 
     pub async fn update_location(&self, id: &Uuid, longitude: f64, latitude: f64) -> Result<(), String> {
-        tracing::debug!("attempting to update location {} {} {}", id, longitude, latitude);
         sqlx::query(
             r#"UPDATE users SET point = ST_MakePoint($2, $3) WHERE id = $1"#
         )
@@ -84,6 +84,7 @@ impl UserService {
         .execute(&self.pool)
         .await
         .map_err(|e| e.to_string())?;
+
         Ok(())
     }
 
@@ -111,15 +112,31 @@ pub async fn update_user(
     State(state): State<AppState>,
     session: Session,
     Json(form): Json<Location>,
-) -> Result<StatusCode, String> {
-    let user = state.users.get_or_create_session_user(session).await?;
+) -> Result<StatusCode, StatusCode> {
+    let user = state.users.get_or_create_session_user(session).await
+        .map_err(|e| {
+            tracing::error!("Failed to get or create session user: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     if let (Some(lon), Some(lat)) = (form.longitude, form.latitude) {
-        // persist the last known location for this user
-        if let Err(e) = state.users.update_location(&user.id, lat, lon).await {
-            tracing::warn!(error = %e, "failed to update user location");
-        }
+        state.users.update_location(&user.id, lat, lon).await
+            .map_err(|e| {
+                tracing::error!("Failed to update user location: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     }
-    // 3. Return 204 No Content on success
+
+    let Html(cards) = crate::component::joy_cards::render_for_user(&state, user.id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to render joy cards: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    if let Err(e) = state.sse.publish_html(cards) {
+        tracing::warn!(?e, "failed to publish SSE html");
+    }
+
     Ok(StatusCode::NO_CONTENT)
 }
