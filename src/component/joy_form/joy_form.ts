@@ -25,11 +25,6 @@ export class JoyForm extends Component {
     };
 
     private nextTimeout: number | undefined;
-    private lastKeystroke: {[key: string]: number} = {
-        frustration: 0,
-        context: 0,
-        joy: 0,
-    };
     private nudgeTimers: {[key: string]: number | undefined} = {
         frustration: undefined,
         context: undefined,
@@ -44,6 +39,26 @@ export class JoyForm extends Component {
         return this.currentStep === name;
     }
 
+    private updateStepProgress(step: string, progress: number) {
+        if (step === 'frustration') {
+            this.signals.frustrationProgress = progress;
+        } else if (step === 'context') {
+            this.signals.contextProgress = progress;
+        } else if (step === 'joy') {
+            this.signals.joyProgress = progress;
+        }
+    }
+
+    private updateStepNudge(step: string, show: boolean) {
+        if (step === 'frustration') {
+            this.signals.showFrustrationNudge = show;
+        } else if (step === 'context') {
+            this.signals.showContextNudge = show;
+        } else if (step === 'joy') {
+            this.signals.showJoyNudge = show;
+        }
+    }
+
     public checkLength() {
         const step = this.currentStep;
         if (!(step in this.signals)) {
@@ -53,16 +68,7 @@ export class JoyForm extends Component {
         const len = (this.signals[step] as string).length;
         
         // Update progress percentage
-        if (step === 'frustration') {
-            this.signals.frustrationProgress = Math.min(100, (len / this.signals.MAX_LENGTH) * 100);
-        } else if (step === 'context') {
-            this.signals.contextProgress = Math.min(100, (len / this.signals.MAX_LENGTH) * 100);
-        } else if (step === 'joy') {
-            this.signals.joyProgress = Math.min(100, (len / this.signals.MAX_LENGTH) * 100);
-        }
-        
-        // Track last keystroke time
-        this.lastKeystroke[step] = Date.now();
+        this.updateStepProgress(step, Math.min(100, (len / this.signals.MAX_LENGTH) * 100));
         
         // Clear existing nudge timer for this step
         if (this.nudgeTimers[step]) {
@@ -70,24 +76,12 @@ export class JoyForm extends Component {
         }
         
         // Hide nudge immediately on keystroke
-        if (step === 'frustration') {
-            this.signals.showFrustrationNudge = false;
-        } else if (step === 'context') {
-            this.signals.showContextNudge = false;
-        } else if (step === 'joy') {
-            this.signals.showJoyNudge = false;
-        }
+        this.updateStepNudge(step, false);
         
         // If input is less than minimum, set timer to show nudge after 1 second
         if (len < this.signals.MAX_LENGTH) {
             this.nudgeTimers[step] = window.setTimeout(() => {
-                if (step === 'frustration') {
-                    this.signals.showFrustrationNudge = true;
-                } else if (step === 'context') {
-                    this.signals.showContextNudge = true;
-                } else if (step === 'joy') {
-                    this.signals.showJoyNudge = true;
-                }
+                this.updateStepNudge(step, true);
             }, 1000);
         }
         
@@ -106,10 +100,10 @@ export class JoyForm extends Component {
         }
         
         // Clear nudge timers for the current step
-        const step = this.currentStep;
-        if (step && this.nudgeTimers[step]) {
-            clearTimeout(this.nudgeTimers[step]);
-            this.nudgeTimers[step] = undefined;
+        const currentStep = this.currentStep;
+        if (currentStep && this.nudgeTimers[currentStep]) {
+            clearTimeout(this.nudgeTimers[currentStep]);
+            this.nudgeTimers[currentStep] = undefined;
         }
 
         if (this.signals.currentStep < STEPS.length - 1) {
