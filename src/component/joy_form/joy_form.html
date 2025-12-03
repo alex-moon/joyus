@@ -1,9 +1,8 @@
 <app-joy-form id="joy-form">
   <template shadowrootmode="open">
-    <link rel="stylesheet" href="/assets/css/component/joy_form.css"/>
-
+    <link rel="stylesheet" href="/assets/css/component/joy_form.css"/>\n
     <div class="progress-container">
-      <div class="progress-bar" data-style:width="($currentStep / 3 * 100) + '%'"></div>
+      <div class="progress-bar" data-style:width="($currentStep / 3 * 100) + '%'"/></div>
     </div>
 
     <!-- Start screen -->
@@ -27,9 +26,9 @@
                 placeholder="What frustrated you?"
                 id="frustration"
         ></textarea>
-        <p class="nudge" data-show="$showFrustrationNudge">Keep writing!</p>
+        <p class="nudge" data-show="$showFrustrationNudge" data-style:color="$frustrationFillColor" data-text="$frustrationNudgeText"></p>
         <div class="input-progress-container">
-          <div class="input-progress-bar" data-style:width="$frustrationProgress + '%'"></div>
+          <div class="input-progress-bar" data-style:width="$frustrationProgress + '%'" data-style:background="$frustrationFillColor"></div>
         </div>
       </article>
     </section>
@@ -44,9 +43,9 @@
                 placeholder="Describe the situation..."
                 id="context"
         ></textarea>
-        <p class="nudge" data-show="$showContextNudge">Keep writing!</p>
+        <p class="nudge" data-show="$showContextNudge" data-style:color="$contextFillColor" data-text="$contextNudgeText"></p>
         <div class="input-progress-container">
-          <div class="input-progress-bar" data-style:width="$contextProgress + '%'"></div>
+          <div class="input-progress-bar" data-style:width="$contextProgress + '%'" data-style:background="$contextFillColor"></div>
         </div>
       </article>
     </section>
@@ -63,9 +62,9 @@
         ></textarea>
         <footer class="question-footer">
           <div class="progress-section">
-            <p class="nudge" data-show="$showJoyNudge">Keep writing!</p>
+            <p class="nudge" data-show="$showJoyNudge" data-style:color="$joyFillColor" data-text="$joyNudgeText"></p>
             <div class="input-progress-container">
-              <div class="input-progress-bar" data-style:width="$joyProgress + '%'"></div>
+              <div class="input-progress-bar" data-style:width="$joyProgress + '%'" data-style:background="$joyFillColor"></div>
             </div>
           </div>
           <button
