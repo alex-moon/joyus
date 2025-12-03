@@ -27,9 +27,10 @@
                 placeholder="What frustrated you?"
                 id="frustration"
         ></textarea>
-        <p class="character-count">
-          <span data-text="$frustration.length"></span> / <span data-text="$MAX_LENGTH"></span> characters
-        </p>
+        <p class="nudge" data-show="$showFrustrationNudge">Keep writing!</p>
+        <div class="input-progress-container">
+          <div class="input-progress-bar" data-style:width="$frustrationProgress + '%'"></div>
+        </div>
       </article>
     </section>
 
@@ -43,9 +44,10 @@
                 placeholder="Describe the situation..."
                 id="context"
         ></textarea>
-        <p class="character-count">
-          <span data-text="$context.length"></span> / <span data-text="$MAX_LENGTH"></span> characters
-        </p>
+        <p class="nudge" data-show="$showContextNudge">Keep writing!</p>
+        <div class="input-progress-container">
+          <div class="input-progress-bar" data-style:width="$contextProgress + '%'"></div>
+        </div>
       </article>
     </section>
 
@@ -60,9 +62,12 @@
                 id="joy"
         ></textarea>
         <footer class="question-footer">
-          <p class="character-count">
-            <span data-text="$joy.length"></span> / <span data-text="$MAX_LENGTH"></span> characters
-          </p>
+          <div class="progress-section">
+            <p class="nudge" data-show="$showJoyNudge">Keep writing!</p>
+            <div class="input-progress-container">
+              <div class="input-progress-bar" data-style:width="$joyProgress + '%'"></div>
+            </div>
+          </div>
           <button
                   data-show="$joy.length >= $MAX_LENGTH"
                   class="primary"

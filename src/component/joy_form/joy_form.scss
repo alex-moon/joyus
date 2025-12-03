@@ -102,10 +102,39 @@
     }
   }
 
+  p.nudge {
+    color: $secondary;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  div.input-progress-container {
+    width: 100%;
+    height: 8px;
+    background: $border;
+    border-radius: 9999px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+
+  div.input-progress-bar {
+    height: 100%;
+    background: $secondary;
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+  }
+
   footer.question-footer {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     margin-top: 1rem;
+    gap: 1rem;
+
+    div.progress-section {
+      flex: 1;
+    }
   }
 }
